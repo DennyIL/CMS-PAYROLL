@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.UserMatrix, BRIChannelSchedulerNew" table="usermatrixs">
+
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="assigned" />
+    </id>
+
+    <property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+    <property name="CreatedTime">
+      <column name="CREATEDTIME" />
+    </property>
+    <property name="Approver">
+      <column name="APPROVER" />
+    </property>
+    <property name="Matrix">
+      <column name="MATRIX" />
+    </property>
+  </class>
+
+</hibernate-mapping>

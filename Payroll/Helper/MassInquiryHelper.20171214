@@ -1,0 +1,614 @@
+using System;
+using System.Data;
+using System.Configuration;
+using System.Linq;
+using System.Net;
+using System.Net.Mail;
+using System.Xml.Linq;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using Quartz;
+using Quartz.Impl;
+using log4net;
+using NHibernate;
+using NHibernate.Expression;
+using BRIChannelSchedulerNew.Payroll.Helper;
+using BRIChannelSchedulerNew.Payroll.Pocos;
+using System.Data.SqlClient;
+using System.Threading;
+using System.Text.RegularExpressions;
+using System.Net.Sockets;
+
+/// <summary>
+/// Summary description for FundTransferHelper
+/// </summary>
+public class MassInquiryHelper
+{
+    public MassInquiryHelper() { }
+    public static string schInfo = "=== " + DateTime.Now + " ";
+    
+    /*Untuk generate dan Penambahan pengecekan Instruction code hanya untuk IFT - Denny*/
+    public static Boolean generate(TrxPayroll trx, ISession session, ILog log)
+    {
+        bool result = true;
+        //string schInfo = "=== " + DateTime.Now + " ";
+        try
+        {
+            IList<TrxPayrollDetail> txList = trx.TrxPayrollDetail;
+            String isiFile = "";
+            
+            String autonumber = "";
+            if (!string.IsNullOrEmpty(trx.SeqNumber.ToString()) && trx.SeqNumber > 0)
+            {
+                autonumber = trx.SeqNumber.ToString().Substring(trx.SeqNumber.ToString().Length - 2, 2) + DateTime.Now.Month.ToString("00") + DateTime.Now.Day.ToString("00") + DateTime.Now.Hour.ToString("00") + DateTime.Now.Minute.ToString("00") + DateTime.Now.Second.ToString("00") + DateTime.Now.Millisecond.ToString().Substring(0, 1);
+            }
+            else//khusus pertamini yg Seq Number 0
+            {
+                autonumber = DateTime.Now.Year.ToString().Substring(2) + DateTime.Now.Month.ToString("00") + DateTime.Now.Day.ToString("00") + DateTime.Now.Hour.ToString("00") + DateTime.Now.Minute.ToString("00") + DateTime.Now.Second.ToString("00") + DateTime.Now.Millisecond.ToString().Substring(0, 1);
+            }
+            String filename = "PY" + autonumber;
+
+            //String fNameTemp = filename + count.ToString();
+            Parameter input = session.Load<Parameter>("FOLDER_PAYROLL_INQ_INPUT");
+            String path = input.Data;
+
+            if (File.Exists(path + "\\" + filename))
+            {
+                File.Delete(path + "\\" + filename);
+                log.Info(schInfo + "File Exist. File Deleted!");
+            }
+
+            isiFile += "MH999." + filename + "." + DateTime.Now.ToString("dd/MM/yyyy") + "\n";
+            
+            int countTotalData = 0;
+            foreach (TrxPayrollDetail item in txList)
+            {
+                try
+                {
+                    if ((item.Status != 4)&&(item.InstructionCode.Equals("IFT")))
+                    {
+                        isiFile += "MD999." + item.Id.ToString().PadLeft(16, '0') + ".0" + item.Account + "\n";
+                        countTotalData++;
+                        Console.Write(schInfo + isiFile);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Exception on Scheduller Generate Mass Inq :: " + ex.Message + " => " + ex.StackTrace + " => " + ex.InnerException);
+                    //EvtLogger.Write("Exception on Scheduller Converter Type :: " + ex.Message + " => " + ex.StackTrace, System.Diagnostics.EventLogEntryType.Error);
+                    trx.ErrorDescription += "Exception on Scheduller Generate Mass Inq " + ex.Message + " => " + ex.StackTrace + " => " + ex.InnerException;
+                    trx.Status = ParameterHelper.PAYROLL_EXCEPTION;
+                    result = false;
+                    break;
+                }
+            }
+
+            isiFile += "MF999." + countTotalData.ToString().PadLeft(16, '0');
+
+
+            System.IO.StreamWriter tulis = new System.IO.StreamWriter(path + "\\" + filename);
+
+            tulis.Write(isiFile);
+            tulis.Close();
+
+            trx.FileMassInq = filename;
+            result = true;
+        }
+        catch (Exception ex)
+        {
+            log.Error("Exception on Scheduller Generate Mass Inq :: " + ex.Message + " => " + ex.StackTrace + " => " + ex.InnerException);
+            trx.ErrorDescription += "Exception on Scheduller Generate Mass Inq " + ex.Message + " => " + ex.StackTrace + " => " + ex.InnerException;
+            trx.Status = ParameterHelper.PAYROLL_EXCEPTION;
+            result = false;
+        }
+        return result;
+    }
+
+
+    //untuk Parsing File Output
+    private struct ResultInquiry
+    {
+        public int id;
+        public int statusRek;
+        public String namaRek;
+    }
+
+
+    public static Boolean parsingFile(TrxPayroll trx, ISession session, ILog log, out string msg)
+    {
+        bool result = true;
+        msg = "";
+        try
+        {
+            log.Info("for trx id : " + trx.SeqNumber);
+            
+            //String filename = "PY" + trx.SeqNumber.ToString().PadLeft(13, '0');
+            String filename = trx.FileMassInq;
+
+            Parameter paramoutput = session.Load<Parameter>("FOLDER_PAYROLL_INQ_OUTPUT");
+
+            String fileName = paramoutput.Data + " \\" + filename;
+            FileInfo fi = new FileInfo(fileName);
+            FileStream fs = new FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            StreamReader sr = new StreamReader(fs);
+            String detail = "";
+            IList<ResultInquiry> listOutput = new List<ResultInquiry>();
+            
+            if (fi.Length == 0)
+            {
+                //20170616 - sayedzul - add handler null response
+                #region handler file balikan null dari host
+
+                log.Error("SeqNumber: " + trx.SeqNumber + " Null Response from host, retry trx");
+                result = false;
+                msg = "[NULL]";
+
+                #endregion
+            }
+            else
+            {
+                while (true)
+                {
+                    detail = sr.ReadLine();
+                    if (null == detail) break;
+                    else if (String.IsNullOrEmpty(detail.Trim())) break;
+                    else
+                    {
+                        String temp = detail.Substring(0, 2);
+                        #region switch
+                        switch (temp)
+                        {
+                            case "PY": //footer
+                                break;
+                            case "MH": //header
+                                if (!detail.Substring(2, 3).Equals("000"))//if batch error
+                                {
+                                    string outmsg = "";
+                                    string _batcError = detail.Substring(33, detail.Length - 33);
+
+                                    trx.Status = ParameterHelper.TRXSTATUS_REJECT;
+                                    trx.ErrorDescription += "Rejected - " + _batcError;
+                                    string[] desc = trx.Description.Split('|');
+                                    trx.Description = "Rejected - " + _batcError + "|" + desc[0];
+                                    if (!CheckAccountHelper.rejectAllChild(session, trx, out outmsg, log))
+                                    {
+                                        result = false;
+                                        trx.ErrorDescription += schInfo + outmsg;
+                                    }
+                                    break;
+                                }
+                                break;
+                            case "MD": //detail
+                                ResultInquiry res = new ResultInquiry();
+                                res.id = int.Parse(detail.Substring(6, 16));
+                                res.namaRek = detail.Substring(99, detail.Length - 99);
+                                res.statusRek = 0;
+                                if (detail.Substring(2, 3).Equals("000"))
+                                    res.statusRek = int.Parse(detail.Substring(54, 1));
+
+                                //add to list
+                                listOutput.Add(res);
+                                break;
+
+                            default:
+                                break;
+                        }
+                        #endregion
+                    }
+                }
+
+                #region update data
+                try
+                {
+                    IList<TrxPayrollDetail> detils = trx.TrxPayrollDetail.Where(x => x.Status == ParameterHelper.PAYROLLDETAILS_WAITING_CHECK).ToList<TrxPayrollDetail>();
+                    log.Info("Start Process batch id : " + trx.Id.ToString() + " --- " + detils.Count + " records");
+                    foreach (TrxPayrollDetail detil in detils)
+                    {
+                        TrxPayrollDetail pdetail = session.Get<TrxPayrollDetail>(detil.Id);
+                        ResultInquiry item = listOutput.SingleOrDefault(x => x.id == int.Parse(pdetail.Id.ToString()));
+                        int _statusRek = item.statusRek;
+                        string _namaBRINETS = item.namaRek;
+
+
+                        #region status rekening
+                        if (_statusRek == 1)
+                        {
+                            if (_namaBRINETS.ToUpper().Trim().ToString().Equals(pdetail.Name.ToUpper().Trim()))
+                            {
+                                pdetail.Status = ParameterHelper.TRXSTATUS_VERIFY;
+                                pdetail.ErrorDescription = "";
+                                pdetail.Description = "Account Matched" + "||" + "1";
+                            }
+                            else
+                            {
+                                pdetail.ErrorDescription = "";
+                                pdetail.Status = ParameterHelper.TRXSTATUS_MAKER;
+                                pdetail.Description = "Nama Tidak Sesuai,Seharusnya : " + _namaBRINETS.Trim() + "||" + "1";//nama
+                            }
+                        }
+                        // if (_statusRek == 2) --> rekening tutup
+                        else if (_statusRek == 2)
+                        {
+                            if (_namaBRINETS.ToUpper().Trim().ToString().Equals(pdetail.Name.ToUpper().Trim()))
+                            {
+                                pdetail.Status = ParameterHelper.TRXSTATUS_REJECT;
+                                pdetail.ErrorDescription = "";
+                                //pdetail.Description = "Account Matched" + "||" + "2";
+                                pdetail.Description = "Rekening Tutup";
+                            }
+                            else
+                            {
+                                pdetail.ErrorDescription = "";
+                                pdetail.Status = ParameterHelper.TRXSTATUS_REJECT;
+                                //pdetail.Description = "Nama Tidak Sesuai,Seharusnya : " + _namaBRINETS.Trim() + "||" + "2";//nama
+                                pdetail.Description = "Rekening Tutup";
+                            }
+                        }
+                        //if (_statusRek == 3) --> rekening jatuh tempo
+                        else if (_statusRek == 3)
+                        {
+                            if (_namaBRINETS.ToUpper().Trim().ToString().Equals(pdetail.Name.ToUpper().Trim()))
+                            {
+                                pdetail.Status = ParameterHelper.TRXSTATUS_REJECT;
+                                pdetail.ErrorDescription = "";
+                                pdetail.Description = "Rekening Pinjaman tidak diperbolehkan sebagai Payroll" + "||" + "3";
+                            }
+                            else
+                            {
+                                pdetail.ErrorDescription = "";
+                                pdetail.Status = ParameterHelper.TRXSTATUS_REJECT;
+                                pdetail.Description = "Nama Tidak Sesuai & Rekeknig Pinjaman tidak diperbolehakan sebagai Payroll" + "||" + "3";//nama
+                            }
+                        }
+                        // if (_statusRek == 4) --> aktif (rekening baru)
+                        else if (_statusRek == 4)
+                        {
+                            if (_namaBRINETS.ToUpper().Trim().ToString().Equals(pdetail.Name.ToUpper().Trim()))
+                            {
+                                pdetail.Status = ParameterHelper.TRXSTATUS_VERIFY;
+                                pdetail.ErrorDescription = "";
+                                pdetail.Description = "Account Matched | New today account" + "||" + "4";
+                            }
+                            else
+                            {
+                                pdetail.ErrorDescription = "";
+                                pdetail.Status = ParameterHelper.TRXSTATUS_REJECT;
+                                pdetail.Description = "Account Matched | New today account||" + "4";//nama
+                            }
+                        }
+                        // if (_statusRek == 5) --> aktif (do not close)
+                        else if (_statusRek == 5)
+                        {
+                            if (_namaBRINETS.ToUpper().Trim().ToString().Equals(pdetail.Name.ToUpper().Trim()))
+                            {
+                                pdetail.Status = ParameterHelper.TRXSTATUS_VERIFY;
+                                pdetail.ErrorDescription = "";
+                                pdetail.Description = "Account Matched" + "||" + "5";
+                            }
+                            else
+                            {
+                                pdetail.ErrorDescription = "";
+                                pdetail.Status = ParameterHelper.TRXSTATUS_MAKER;
+                                pdetail.Description = "Nama Tidak Sesuai,Seharusnya : " + _namaBRINETS.Trim() + "||" + "5";//nama
+                            }
+                        }
+                        // if (_statusRek == 6) --> aktif (restricted)
+                        else if (_statusRek == 6)
+                        {
+                            if (_namaBRINETS.ToUpper().Trim().ToString().Equals(pdetail.Name.ToUpper().Trim()))
+                            {
+                                pdetail.Status = ParameterHelper.TRXSTATUS_VERIFY;
+                                pdetail.ErrorDescription = "";
+                                pdetail.Description = "Account Matched" + "||" + "6";
+                            }
+                            else
+                            {
+                                pdetail.ErrorDescription = "";
+                                pdetail.Status = ParameterHelper.TRXSTATUS_MAKER;
+                                pdetail.Description = "Nama Tidak Sesuai,Seharusnya : " + _namaBRINETS.Trim() + "||" + "6";//nama
+                            }
+                        }
+                        // if ((_statusRek == 7)) --> blokir rekening
+                        else if (_statusRek == 7)
+                        {
+                            if (_namaBRINETS.ToUpper().Trim().ToString().Equals(pdetail.Name.ToUpper().Trim()))
+                            {
+                                pdetail.Status = ParameterHelper.TRXSTATUS_REJECT;
+                                pdetail.ErrorDescription = "";
+                                pdetail.Description = "Rekening Ter Blokir" + "||" + "7";
+                            }
+                            else
+                            {
+                                pdetail.Status = ParameterHelper.TRXSTATUS_REJECT;
+                                pdetail.ErrorDescription = "";
+                                pdetail.Description = "Rekening Ter Blokir" + "||" + "7";
+                            }
+                        }
+                        // if ((_statusRek == 8)) --> undefined account
+                        else if (_statusRek == 8)
+                        {
+                            if (_namaBRINETS.ToUpper().Trim().ToString().Equals(pdetail.Name.ToUpper().Trim()))
+                            {
+                                pdetail.Status = ParameterHelper.TRXSTATUS_VERIFY;
+                                pdetail.ErrorDescription = "";
+                                pdetail.Description = "Account Matched" + "||" + "8";
+                            }
+                            else
+                            {
+                                pdetail.ErrorDescription = "";
+                                pdetail.Status = ParameterHelper.TRXSTATUS_MAKER;
+                                pdetail.Description = "Nama Tidak Sesuai,Seharusnya : " + _namaBRINETS.Trim() + "||" + "8";//nama
+                            }
+                        }
+                        // if ((_statusRek == 9)) --> dormant
+                        else if (_statusRek == 9)
+                        {
+                            if (_namaBRINETS.ToUpper().Trim().ToString().Equals(pdetail.Name.ToUpper().Trim()))
+                            {
+                                pdetail.Status = ParameterHelper.TRXSTATUS_VERIFY;
+                                pdetail.ErrorDescription = "";
+                                pdetail.Description = "Account Matched" + "||" + "9";
+                            }
+                            else
+                            {
+                                pdetail.ErrorDescription = "";
+                                pdetail.Status = ParameterHelper.TRXSTATUS_MAKER;
+                                pdetail.Description = "Nama Tidak Sesuai,Seharusnya : " + _namaBRINETS.Trim() + "||" + "9";//nama
+                            }
+                        }
+                        else
+                        {
+                            pdetail.Status = ParameterHelper.TRXSTATUS_REJECT;
+                            pdetail.Description = "Account not found";
+                            pdetail.ErrorDescription += "masuk else " + _namaBRINETS;
+                        }
+                        #endregion
+
+                        //update
+                        session.Update(pdetail);
+                        Console.WriteLine(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + " - Success update detail id : " + pdetail.Id);
+
+                    }
+                    
+                    //flush
+                    session.Flush();
+                    log.Info("Success FLUSH batch id : " + trx.Id.ToString());
+                }
+                catch (Exception ex)
+                {
+                    log.Error("Exception on Scheduller Read Output Mass Inq :: " + ex.Message + " => " + ex.StackTrace + " => " + ex.InnerException);
+                    trx.ErrorDescription += "Exception on Scheduller Read Output Mass Inq :: " + ex.Message + " => " + ex.StackTrace + " => " + ex.InnerException;
+                    trx.Status = ParameterHelper.PAYROLL_EXCEPTION;
+                    result = false;
+                }
+                #endregion
+            }
+        }
+        catch (Exception ex)
+        {
+            log.Error("Exception on Scheduller Read Output Mass Inq :: " + ex.Message + " => " + ex.StackTrace + " => " + ex.InnerException);
+            trx.ErrorDescription += "Exception on Scheduller Read Output Mass Inq :: " + ex.Message + " => " + ex.StackTrace + " => " + ex.InnerException;
+            trx.Status = ParameterHelper.PAYROLL_EXCEPTION;
+            result = false;
+        }
+        
+        return result;
+    }
+
+
+
+    //untuk send FTP and Do MBASE
+    public static Boolean sendToHost(TrxPayroll trx, ISession session, ILog log)
+    {
+        bool result = true;
+
+        log.Info("for trx id : " + trx.SeqNumber);
+        String filename = trx.FileMassInq;
+
+        Parameter input = session.Load<Parameter>("FOLDER_PAYROLL_INQ_INPUT");
+        string path = input.Data + "\\" + filename;
+        Parameter server = session.Load<Parameter>("SERVER_FTP_MASS");
+        Parameter dir = session.Load<Parameter>("FOLDER_FTP_MASS_IN");
+        String _serverUri = server.Data;
+        //String _serverUser = "";//ParameterHelper.GetString("SERVER_FTP_MASS_USER", session);
+        //String _serverPassword = ""; //ParameterHelper.GetString("SERVER_FTP_MASS_PASSWORD", session);
+        String _urlRemote = dir.Data;// ParameterHelper.GetString("FOLDER_SCV_REQUEST_HOST", session);
+        int _port = 21;// int.Parse(ParameterHelper.GetString("SERVER_FTP_MASS_PORT", session).ToString());
+        Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        try
+        {
+            #region sendFTP
+            clientSocket.Connect(_serverUri, _port);
+            FTPHelper ff = new FTPHelper();
+            ff.setDebug(false);
+
+            ff.setRemoteHost(_serverUri);
+            ff.setRemotePort(_port);
+            //ff.setRemoteUser(_serverUser);
+            //ff.setRemotePass(_serverPassword);
+            ff.setSocket(clientSocket);
+            Thread.Sleep(500);
+            //ff.SendUserPassword();
+            ff.chdir(_urlRemote);
+
+            ff.setBinaryMode(false);
+            ff.upload(path);
+            ff.close();
+            log.Info("Success Upload.");
+            #endregion
+
+
+            #region send MBASE
+            log.Info("Begin MBASE");
+
+            bool mbb = false;
+            bool markMbb = false;
+            int count = 0;
+            while (!mbb)
+            {
+                mbb = SchHelper.Mbase8632(filename, log);
+                count++;
+                if (!mbb && count > 5)
+                {
+                    mbb = true;
+                    markMbb = true;
+                }
+            }
+            if (!markMbb)
+            {
+                log.Info("=== (TrxID " + trx.SeqNumber + ") MBASE Command Success!");
+            }
+            else
+            {
+                result = false;
+            }
+            #endregion
+        }
+        catch (Exception ex)
+        {
+            log.Error("Exception on Scheduller Generate Mass Inq :: " + ex.Message + " => " + ex.StackTrace + " => " + ex.InnerException);
+            trx.ErrorDescription += "Exception on Scheduller Generate Mass Inq " + ex.Message + " => " + ex.StackTrace + " => " + ex.InnerException;
+            trx.Status = ParameterHelper.PAYROLL_EXCEPTION;
+            result = false;
+        }
+        
+        return result;
+    }
+
+
+    //untuk download file dari HOST
+    public static Boolean downloadHostResponse(TrxPayroll trx, ISession session, out string outStatus, ILog log)
+    {
+        bool result = true;
+        outStatus = "";
+
+        log.Info("for trx id : " + trx.SeqNumber);
+        String filename = trx.FileMassInq;
+
+
+        Parameter output = session.Load<Parameter>("FOLDER_PAYROLL_INQ_OUTPUT");
+        string path = output.Data + "\\" + filename;
+        Parameter server = session.Load<Parameter>("SERVER_FTP_MASS");
+        Parameter dir = session.Load<Parameter>("FOLDER_FTP_MASS_OUT");
+
+        String[] file = path.Split(new String[] { "\\" }, StringSplitOptions.None);
+        String _serverUri = server.Data;
+        String _serverUser = ParameterHelper.GetString("SERVER_FTP_MASS_USER", session);
+        String _serverPassword = ParameterHelper.GetString("SERVER_FTP_MASS_PASSWORD", session);
+        String _urlRemote = dir.Data;// ParameterHelper.GetString("FOLDER_SCV_REQUEST_HOST", session);
+        int _port = 21;// int.Parse(ParameterHelper.GetString("SERVER_FTP_MASS_PORT", session).ToString());
+        Socket clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        try
+        {
+            clientSocket.Connect(_serverUri, _port);
+            FTPHelper ff = new FTPHelper();
+            ff.setDebug(false);
+
+            ff.setRemoteHost(_serverUri);
+            ff.setRemotePort(_port);
+            ff.setRemoteUser(_serverUser);
+            ff.setRemotePass(_serverPassword);
+            ff.setSocket(clientSocket);
+            Thread.Sleep(500);
+            ff.SendUserPassword();
+            ff.chdir(_urlRemote);
+
+            ff.setBinaryMode(false);
+
+            try
+            {
+                ff.download(filename, path);
+                log.Info("Download " + filename + " Success..");
+                outStatus = "SUKSES";
+
+                //ff.setBinaryMode(false);
+                ff.deleteRemoteFile(filename);
+                log.Info("Delete Success..");
+            }
+            catch(Exception e)
+            {
+                /*
+                 * 2017-05-31 : Mas Day Cek file di lokal apakah sudah ada. Kalo ada exists
+                 */
+                if (File.Exists(path))
+                {
+                    log.Info("File " + filename + " allready exists on path " + path);
+                    trx.ErrorDescription = "File " + filename + " allready exists on path " + path;
+                    outStatus = "SUKSES";
+                }
+                else
+                {
+                    log.Info("File " + filename + " not exist. Try again in few moment.");
+                    trx.ErrorDescription += "File not exist. Try again in few moment.";
+                }
+            }
+            ff.close();
+
+        }
+        catch (Exception ex)
+        {
+            log.Info("=== (TrxID " + trx.SeqNumber + ") Download Exception!");
+            log.Error("=== (TrxID " + trx.SeqNumber + ") Msg : " + ex.Message + "Stack  :" + ex.StackTrace + "Stack  :" + ex.InnerException);
+            trx.ErrorDescription += "Download exception.";
+
+            result = false;
+        }
+
+        return result;
+    }
+
+
+
+    //untuk resend file mass inq jika balikan tak kunjung datang
+    public static Boolean retryMassInq(TrxPayroll trx, ISession session, ILog log)
+    {
+        bool result = true;
+        try
+        {
+            int menitBye = int.Parse(ParameterHelper.GetString("MASS_INQ_TIME_BYE", session));
+            if (trx.CreatedTime.AddMinutes(menitBye) < DateTime.Now)
+            {
+                trx.Status = ParameterHelper.TRXSTATUS_REJECT;
+                trx.Description = "ERROR - No Response From Host, please try again or contact administrator";
+                trx.ErrorDescription += "|Reject Trx, sudah " + menitBye + " menit Broh.";
+                log.Error("|Reject Trx, sudah " + menitBye + " menit Broh.");
+                trx.LastUpdate = DateTime.Now;
+
+                Transaction trans = session.CreateCriteria(typeof(Transaction))
+                               .Add(Expression.In("TransactionId", new int[] { 101, 102, 103 }))
+                               .Add(Expression.Like("TObject", trx.Id, MatchMode.Anywhere))
+                               .UniqueResult<Transaction>();
+                if (trans != null)//avoid Payroll Musimas
+                {
+                    session.Delete(trans);
+                }
+                string theQuery = @"delete from trxpayrolldetails where pid  = '"+trx.Id+"';";
+                string msg = "";
+                PayrollHelper.ExecuteQuery(session, theQuery, out msg);
+            }
+            else
+            {
+                int menit = int.Parse(ParameterHelper.GetString("MASS_INQ_TIME_RETRY", session));
+                
+                if (trx.LastUpdate.AddMinutes(menit) < DateTime.Now)
+                {
+                    trx.Status = ParameterHelper.PAYROLL_WAITING_GENERATE_MASS_INQ;
+                    trx.ErrorDescription += "|Generate ulang mass inq, sudah " + menit + " menit Broh.";
+                    log.Info("|Generate ulang mass inq, sudah " + menit + " menit Broh.");
+                    trx.LastUpdate = DateTime.Now;
+                }
+            }
+            
+            session.Update(trx);
+            session.Flush();
+        }
+        catch (Exception e)
+        {
+            result = false;
+        }
+
+        return result;
+
+    }
+}

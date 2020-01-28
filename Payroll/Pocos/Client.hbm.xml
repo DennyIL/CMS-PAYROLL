@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.Client, BRIChannelSchedulerNew" table="clients">
+
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="native" />
+    </id>
+
+    <property name="Handle">
+      <column name="HANDLE" />
+    </property>
+    <property name="Name">
+      <column name="NAME" />
+    </property>
+    <property name="Description">
+      <column name="DESCRIPTION" />
+    </property>
+    <property name="Bussines">
+      <column name="BUSSINES" />
+    </property>
+    <property name="Address1">
+      <column name="ADDRESS_1" />
+    </property>
+    <property name="Address2">
+      <column name="ADDRESS_2" />
+    </property>
+    <property name="Address3">
+      <column name="ADDRESS_3" />
+    </property>
+    <property name="AccList">
+      <column name="ACCLIST" />
+    </property>
+    <property name="FiturList">
+      <column name="FITURLIST" />
+    </property>
+    <property name="MiscData">
+      <column name="MISCDATA" />
+    </property>
+    <property name="Phone">
+      <column name="PHONE" />
+    </property>
+    <property name="Fax">
+      <column name="FACSIMILE" />
+    </property>
+    <property name="Type">
+      <column name="TYPE" />
+    </property>
+    <property name="Cp">
+      <column name="CONTACTPERSON" />
+    </property>
+    <property name="CpDescription">
+      <column name="CONTACTPERSON_DESCRIPTION" />
+    </property>
+    <property name="CpEmail">
+      <column name="CONTACTPERSON_EMAIL" />
+    </property>
+    <property name="CpPhone">
+      <column name="CONTACTPERSON_PHONE" />
+    </property>
+    <property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+    <property name="CreationDate">
+      <column name="CREATIONDATE" />
+    </property>
+    <property name="Approver">
+      <column name="APPROVER" />
+    </property>
+    <property name="Language">
+      <column name="LANGUAGE" />
+    </property>
+    <property name="Currency">
+      <column name="CURRENCY" />
+    </property>
+    <property name="RecStatus">
+      <column name="RECSTAT" />
+    </property>
+    <property name="Perekomendasi">
+      <column name="PEREKOMENDASI" />
+    </property>
+    <property name="NeedToken">
+      <column name="NEED_TOKEN" />
+    </property>
+    <property name="BookingOffice">
+      <column name="BOOKING_OFFICE" />
+    </property>
+    <property name="Jenis_prhs">
+      <column name="JENIS_PRHS" />
+    </property>
+
+    <property name="CpDescription2">
+      <column name="CONTACTPERSON2_DESCRIPTION" />
+    </property>
+
+    <property name="LimitOutIDR">
+      <column name="LIMITOUTIDR" />
+    </property>
+
+    <property name="LimitOutValas">
+      <column name="LIMITOUTVALAS" />
+    </property>
+
+    <property name="LimitTotalOB">
+      <column name="LIMITTOTALOB" />
+    </property>
+
+    <property name="MaxUser">
+      <column name="MAXUSER" />
+    </property>
+
+    <property name="Seller">
+      <column name="SELLER" />
+    </property>
+
+    <property name="Seller2">
+      <column name="SELLER2" />
+    </property>
+
+    <property name="Keterangan">
+      <column name="KETERANGAN" />
+    </property>
+
+    <property name="JenisClient">
+      <column name="JENISCLIENT" />
+    </property>
+
+    <property name="VoucherCode">
+      <column name="VOUCHERCODE" />
+    </property>
+
+    <property name="EregStat">
+      <column name="EREGSTAT" />
+    </property>
+
+    <property name="EtaxDKI">
+      <column name="ETAXDKI" />
+    </property>
+
+    <property name="EtaxNonDKI">
+      <column name="ETAXNONDKI" />
+    </property>
+
+    <property name="Token">
+      <column name="TOKEN" />
+    </property>
+
+    <many-to-one name="ClientMatrix"
+        column="ID"
+        unique="true"
+        not-null="true" update="false" insert="false"/>
+
+  </class>
+
+</hibernate-mapping>

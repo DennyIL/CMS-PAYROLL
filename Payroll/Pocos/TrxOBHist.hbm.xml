@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.TrxOBHist, BRIChannelSchedulerNew" table="trxobhist">
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="native" />
+    </id>
+    <property name="ParentId">
+      <column name="PARENTID" />
+    </property>
+    <property name="ClientId">
+      <column name="CLIENTID" />
+    </property>
+    <property name="TrxCode">
+      <column name="TRXCODE" />
+    </property>
+    <property name="TrxType">
+      <column name="TRXTYPE" />
+    </property>
+    <property name="TrxActId">
+      <column name="TRXACTID" />
+    </property>
+    <property name="ValueDate">
+      <column name="VALUEDATE" />
+    </property>
+    <property name="CreditCur">
+      <column name="CREDITCUR" />
+    </property>
+    <property name="CreditAmt">
+      <column name="CREDITAMT" />
+    </property>
+    <property name="KursJualTrx">
+      <column name="KURSJUALTRX" />
+    </property>
+    <property name="KursBeliTrx">
+      <column name="KURSBELITRX" />
+    </property>
+    <property name="DebitCur">
+      <column name="DEBITCUR" />
+    </property>
+    <property name="DebitAmt">
+      <column name="DEBITAMT" />
+    </property>
+    <property name="BaseCur">
+      <column name="BASECUR" />
+    </property>
+    <property name="BaseAmt">
+      <column name="BASEAMT" />
+    </property>
+    <property name="KursJualBase">
+      <column name="KURSJUALBASE" />
+    </property>
+    <property name="TrxRemark">
+      <column name="TRXREMARK" />
+    </property>
+    <property name="VoucherCode">
+      <column name="VOUCHERCODE" />
+    </property>
+    <property name="ChargeCur">
+      <column name="CHARGECUR" />
+    </property>
+    <property name="ChargeAmt">
+      <column name="CHARGEAMT" />
+    </property>
+    <property name="DebitAcc">
+      <column name="DEBITACC" />
+    </property>
+    <property name="DebitAccName">
+      <column name="DEBITACCNAME" />
+    </property>
+    <property name="BenAcc">
+      <column name="BENACC" />
+    </property>
+    <property name="BenAccName">
+      <column name="BENACCNAME" />
+    </property>
+    <property name="BenBankIdentifier">
+      <column name="BENBANKIDENTIFIER" />
+    </property>
+    <property name="BenBankName">
+      <column name="BENBANKNAME" />
+    </property>
+    <property name="MakerInfo">
+      <column name="MAKERINFO" />
+    </property>
+    <property name="CheckerInfo">
+      <column name="CHECKERINFO" />
+    </property>
+    <property name="ApproverInfo">
+      <column name="APPROVERINFO" />
+    </property>
+    <property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+    <property name="Status">
+      <column name="STATUS" />
+    </property>    
+    <property name="Description">
+      <column name="DESCRIPTION" />
+    </property>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,262 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2">
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.ExpressProcess, BRIChannelSchedulerNew" table="expressprocess">
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="native" />
+    </id>
+
+    <property name="TrxType">
+      <column name="TrxType" />
+    </property>
+
+    <property name="TrxID">
+      <column name="TrxID" />
+    </property>
+
+    <property name="CreatedTime">
+      <column name="CreatedTime" />
+    </property>
+
+    <property name="LastUpdate">
+      <column name="LastUpdate" />
+    </property>
+
+    <property name="Status">
+      <column name="Status" />
+    </property>
+
+    <property name="Description">
+      <column name="Description" />
+    </property>
+
+    <property name="Tanggal_Transaksi">
+      <column name="Tanggal_Transaksi" />
+    </property>
+
+    <property name="Sarana_Transaksi">
+      <column name="Sarana_Transaksi" />
+    </property>
+
+    <property name="Kode_Transaksi">
+      <column name="Kode_Transaksi" />
+    </property>
+
+    <property name="Peserta_Pengirim_Asal">
+      <column name="Peserta_Pengirim_Asal" />
+    </property>
+
+    <property name="Sandi_Kota_Asal">
+      <column name="Sandi_Kota_Asal" />
+    </property>
+
+    <property name="Peserta_Pengirim_Penerus">
+      <column name="Peserta_Pengirim_Penerus" />
+    </property>
+
+    <property name="Peserta_Penerima_Akhir">
+      <column name="Peserta_Penerima_Akhir" />
+    </property>
+
+    <property name="Sandi_Kota_Tujuan">
+      <column name="Sandi_Kota_Tujuan" />
+    </property>
+
+    <property name="Peserta_Penerima_Penerus">
+      <column name="Peserta_Penerima_Penerus" />
+    </property>
+
+    <property name="Jenis_Nasabah">
+      <column name="Jenis_Nasabah" />
+    </property>
+
+    <property name="No_Rekening_Pengirim">
+      <column name="No_Rekening_Pengirim" />
+    </property>
+
+    <property name="Nama_Pengirim">
+      <column name="Nama_Pengirim" />
+    </property>
+
+    <property name="No_Identitas_Pengirim">
+      <column name="No_Identitas_Pengirim" />
+    </property>
+
+    <property name="Jenis_Nasabah_Pengirim">
+      <column name="Jenis_Nasabah_Pengirim" />
+    </property>
+
+    <property name="Status_Kependudukan_Pengirim">
+      <column name="Status_Kependudukan_Pengirim" />
+    </property>
+
+    <property name="Alamat_Pengirim">
+      <column name="Alamat_Pengirim" />
+    </property>
+
+    <property name="Telepon_Pengirim">
+      <column name="Telepon_Pengirim" />
+    </property>
+
+    <property name="No_Rekening_Tujuan">
+      <column name="No_Rekening_Tujuan" />
+    </property>
+
+    <property name="Nama_Penerima">
+      <column name="Nama_Penerima" />
+    </property>
+
+    <property name="No_Identitas_Penerima">
+      <column name="No_Identitas_Penerima" />
+    </property>
+
+    <property name="Jenis_Nasabah_Penerima">
+      <column name="Jenis_Nasabah_Penerima" />
+    </property>
+
+    <property name="Status_Kependudukan_Penerima">
+      <column name="Status_Kependudukan_Penerima" />
+    </property>
+
+    <property name="Alamat_Penerima">
+      <column name="Alamat_Penerima" />
+    </property>
+
+    <property name="Telepon_Penerima">
+      <column name="Telepon_Penerima" />
+    </property>
+
+    <property name="Cara_Penyetoran">
+      <column name="Cara_Penyetoran" />
+    </property>
+
+    <property name="No_Rekening_Asal">
+      <column name="No_Rekening_Asal" />
+    </property>
+
+    <property name="NoCekBG">
+      <column name="NoCekBG" />
+    </property>
+
+    <property name="Nama">
+      <column name="Nama" />
+    </property>
+
+    <property name="Jumlah_Dikirim">
+      <column name="Jumlah_Dikirim" />
+    </property>
+
+    <property name="Currency_Dikirim">
+      <column name="Currency_Dikirim" />
+    </property>
+
+    <property name="Biaya">
+      <column name="Biaya" />
+    </property>
+
+    <property name="Total">
+      <column name="Total" />
+    </property>
+
+    <property name="Currency_Total">
+      <column name="Currency_Total" />
+    </property>
+
+    <property name="Berita">
+      <column name="Berita" />
+    </property>
+
+    <property name="Kanca_Asal">
+      <column name="Kanca_Asal" />
+    </property>
+
+    <property name="Sumber_Dana">
+      <column name="Sumber_Dana" />
+    </property>
+
+    <property name="Keperluan">
+      <column name="Keperluan" />
+    </property>
+
+    <property name="Pekerjaan">
+      <column name="Pekerjaan" />
+    </property>
+
+    <property name="Jabatan">
+      <column name="Jabatan" />
+    </property>
+
+    <property name="Ttl">
+      <column name="Ttl" />
+    </property>
+
+    <property name="User_Id">
+      <column name="User_Id" />
+    </property>
+
+    <property name="User_Approve">
+      <column name="User_Approve" />
+    </property>
+
+    <property name="Cabang">
+      <column name="Cabang" />
+    </property>
+
+    <property name="No_Remitance">
+      <column name="No_Remitance" />
+    </property>
+
+    <property name="Jurnal_Seq">
+      <column name="Jurnal_Seq" />
+    </property>
+
+    <property name="Cif">
+      <column name="Cif" />
+    </property>
+
+    <property name="Nama_Bank_Penerima">
+      <column name="Nama_Bank_Penerima" />
+    </property>
+
+    <property name="Kode_Pos_Pengirim">
+      <column name="Kode_Pos_Pengirim" />
+    </property>
+
+    <property name="Kode_Pos_Penerima">
+      <column name="Kode_Pos_Penerima" />
+    </property>
+
+    <property name="Provinsi_Penerima">
+      <column name="Provinsi_Penerima" />
+    </property>
+
+    <property name="Jenis_Badan_Usaha">
+      <column name="Jenis_Badan_Usaha" />
+    </property>
+
+    <property name="Kode_Bank_Brinets_Penerima">
+      <column name="Kode_Bank_Brinets_Penerima" />
+    </property>
+
+    <property name="Channel">
+      <column name="Channel" />
+    </property>
+
+    <property name="Request">
+      <column name="Request" />
+    </property>
+
+    <property name="Response">
+      <column name="Response" />
+    </property>
+
+    <property name="Booking_Id">
+      <column name="Booking_Id" />
+    </property>
+
+    <property name="Counter">
+      <column name="COUNTER" />
+    </property>
+    
+  </class>
+</hibernate-mapping>

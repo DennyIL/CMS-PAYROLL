@@ -1,0 +1,174 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Data;
+using System.IO;
+using Quartz;
+using Quartz.Impl;
+using log4net;
+using BRIChannelSchedulerNew.Payroll.Helper;
+using BRIChannelSchedulerNew.Payroll.Pocos;
+using NHibernate;
+using NHibernate.Cfg;
+using NHibernate.Expression;
+using System.Globalization;
+using System.Xml;
+using System.Xml.Serialization;
+using BriInterfaceWrapper.BriInterface;
+using BRIVAWrapper.Briva;
+using System.Threading;
+using System.Data.SqlClient;
+using System.Text.RegularExpressions;
+
+
+namespace BRIChannelSchedulerNew.Payroll.jobReadOutputMassInq
+{
+    class read_15 : IStatefulJob
+    {
+        private static String SchCode = "read_15";
+        private static String SchName = "Scheduller Payroll Download and Read Mass Inq";
+        private static String schInfo = "=== " + DateTime.Now + " ";
+        private static int jobNumber = 15;//trx yang diproses, ambil trxID kelipatan 10
+        private static Configuration cfg;
+        private static ISessionFactory factory;
+        private String name = "";
+        private String curr = "";
+        protected ISession session;
+
+        
+        private DataTable dte = new DataTable("dte");
+        #region IJob Members
+        void IJob.Execute(JobExecutionContext context)
+        {
+            ILog log = LogManager.GetLogger(typeof(read_15));
+            try
+            {
+                if (factory == null)
+                {
+                    cfg = new Configuration();
+                    cfg.AddAssembly("BRIChannelSchedulerNew");
+                    factory = cfg.BuildSessionFactory();
+                }
+                session = factory.OpenSession();
+                Console.WriteLine(schInfo + SchCode + " === Starting " + SchName + " ===");
+
+                try
+                {
+                    //CMS Oprasioanal Status dan Payroll Oprasional Status
+                    //CMS Oprasional
+                    Parameter paramCMS = session.Load<Parameter>("CMS_OPERASIONAL_STATUS");
+                    String cmsOprasional = paramCMS.Data;
+                    //Payroll Oprasional
+                    Parameter paramPayroll = session.Load<Parameter>("PAYROLL_OPERASIONAL_STATUS");
+                    String payrollOprasional = paramPayroll.Data;
+                    if (cmsOprasional.Equals("1") && payrollOprasional.Equals("1"))
+                    {
+                        Commitjob_transaction(log);
+                    }
+                    else Console.WriteLine(schInfo + " === Starting " + SchName + "  CMS or Payroll Not in Oprasional Status ===");
+                }
+                catch (Exception ee)
+                {
+                    log.Error(SchCode + " === " + SchName + " Process Error Message:: " + ee.Message);
+                    log.Error(SchCode + " === " + SchName + " Process Error Inner Exception:: " + ee.InnerException);
+                    log.Error(SchCode + " === " + SchName + " Process Error StackTrace:: " + ee.StackTrace);
+                }
+                Console.WriteLine(schInfo + SchCode + " === End " + SchName + " ===");
+            }
+            catch (Exception ex)
+            {
+                log.Error(SchCode + " === " + SchName + " Failed To Start Message:: " + ex.Message);
+                log.Error(SchCode + " === " + SchName + " Failed To Start Inner Exception:: " + ex.InnerException);
+                log.Error(SchCode + " === " + SchName + " Failed To Start StackTrace:: " + ex.StackTrace);
+            }
+            finally
+            {
+                if (session.IsOpen)
+                {
+                    session.Clear();
+                    session.Close();
+                    session.Dispose();
+                }
+                factory.Close();
+                factory.Dispose();
+
+                cfg = null;
+                GC.Collect();
+            }
+        }
+
+        #endregion
+
+        private void Commitjob_transaction(ILog log)
+        {
+            //initial parameters
+            Parameter maxJob = session.Load<Parameter>("PAYROLL_SCH_JOB_READ_MASS_INQ");
+            Parameter maxTrx = session.Load<Parameter>("PAYROLL_SCH_GENERATE_MASS_INQ_MAX_TRX");
+            int maxResult = int.Parse(maxTrx.Data);
+
+            IList<TrxPayroll> trxList = session.CreateSQLQuery("select * from trxpayrolls where status=? and (seqnumber%?)=? and lastupdate<=? order by id ASC")
+                .AddEntity(typeof(TrxPayroll))
+                .SetInt32(0, ParameterHelper.PAYROLL_WAITING_CHECKACC)//11 : waiting mass inq output
+                .SetInt32(1, int.Parse(maxJob.Data))//id mod(10)
+                .SetInt32(2, jobNumber)//id mod = ini mod 0, ambil trxID kelipatan 10
+                .SetDateTime(3, DateTime.Now)
+                //.SetMaxResults(maxResult)
+                .List<TrxPayroll>();
+
+            //we've found some data
+            foreach (TrxPayroll trx in trxList)
+            {
+                string outStatus = "";
+                if (MassInquiryHelper.downloadHostResponse(trx, session, out outStatus, log))
+                {
+                    if (outStatus.Equals("SUKSES"))//jika sukses download
+                    {
+                        log.Info("Success download file.");
+                        trx.ErrorDescription += schInfo + "Success download file";
+                        if (MassInquiryHelper.parsingFile(trx, session, log, out outStatus))
+                        {
+                            log.Info("Success Parsing File.");
+                            trx.ErrorDescription += schInfo + "Success Parsing File";
+                            trx.LastUpdate = DateTime.Now.AddMinutes(2);//biar gak dihajar terus
+                            trx.Status = ParameterHelper.PAYROLL_SUCCESS_PARSING;
+                        }
+                        else
+                        {
+                            if (outStatus.Equals("[NULL]"))
+                            {
+                                trx.Status = ParameterHelper.PAYROLL_WAITING_GENERATE_MASS_INQ;
+                                trx.LastUpdate = DateTime.Now;
+                                trx.ErrorDescription += "|file balikan dari host 0 KB|" + trx.LastUpdate;
+                            }
+                            else
+                            {
+                                log.Error("Something Wrong In Parsing File :(");
+                                trx.LastUpdate = DateTime.Now.AddMinutes(2);
+                                trx.ErrorDescription += schInfo + "Something Wrong In Parsing File" + trx.LastUpdate;
+                            }
+                        }
+                    }
+                    else//jika belom terdownload cek apa perlu di retry
+                    {
+                        if (!MassInquiryHelper.retryMassInq(trx, session, log))
+                        {
+                            log.Error("Something Wrong In Retry Mass Inq");
+                            trx.LastUpdate = DateTime.Now.AddMinutes(2);
+                            trx.ErrorDescription += schInfo + "Something Wrong In Retry Mass Inq, try again at " + trx.LastUpdate;
+                        }
+                    }
+                }
+                else
+                {
+                    log.Error("Something Wrong In Download File :(");
+                    trx.LastUpdate = DateTime.Now.AddMinutes(2);
+                    trx.ErrorDescription += schInfo + "Something Wrong In Download File" + trx.LastUpdate;
+                }
+
+                session.Update(trx);
+                session.Flush();
+            }
+        }
+    }
+}

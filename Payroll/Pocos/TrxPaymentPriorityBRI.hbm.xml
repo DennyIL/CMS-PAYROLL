@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.TrxPaymentPriorityBRI, BRIChannelSchedulerNew" table="trxpaymentprioritybri">
+
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="native" />
+    </id>
+    <property name="ClientId">
+      <column name="CLIENTID" />
+    </property>
+    <property name="Fid">
+      <column name="FID" />
+    </property>
+    <property name="Pid">
+      <column name="PID" />
+    </property>
+    <property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+    <property name="CreatedTime">
+      <column name="CREATEDTIME" />
+    </property>
+    <property name="FilePath">
+      <column name="FILEPATH" />
+    </property>
+    <property name="FilePathOriginalFile">
+      <column name="FILEPATHORIGINALFILE" />
+    </property>
+    <property name="OriginalFileName">
+      <column name="ORIGINALFILENAME" />
+    </property>
+    <property name="FileDescription">
+      <column name="FILEDESCRIPTION" />
+    </property>
+    <property name="Description">
+      <column name="DESCRIPTION" />
+    </property>
+    <property name="Status">
+      <column name="STATUS" />
+    </property>
+    <property name="ServerID">
+      <column name="SERVERID" />
+    </property>
+    <property name="SharedFolder">
+      <column name="SHAREDFOLDER" />
+    </property>
+    <property name="SharedFolderStatus">
+      <column name="SFSTATUS" />
+    </property>
+    <property name="ErrorDescription">
+      <column name="ERRORDESCRIPTION" />
+    </property>
+    <property name="FileNameInq">
+      <column name="FILENAMEINQ" />
+    </property>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.Transaction, BRIChannelSchedulerNew" table="transactions">
+
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="native"/>
+    </id>
+
+    <property name="ClientId">
+      <column name="CLIENTID"/>
+    </property>
+    <property name="Handle">
+      <column name="HANDLE"/>
+    </property>
+
+    <property name="TransactionId">
+      <column name="TRANSACTIONID"/>
+    </property>
+    <property name="CreatedTime">
+      <column name="CREATEDTIME"/>
+    </property>
+    <property name="VerifiedTime">
+      <column name="VERIFIEDTIME"/>
+    </property>
+    <property name="ApprovedTime">
+      <column name="APPROVEDTIME"/>
+    </property>
+    <property name="CheckWork">
+      <column name="CHECKWORK"/>
+    </property>
+    <property name="CheckTotal">
+      <column name="CHECKTOTAL"/>
+    </property>
+    <property name="ApproveWork">
+      <column name="APPROVEWORK"/>
+    </property>
+    <property name="ApproveTotal">
+      <column name="APPROVETOTAL"/>
+    </property>
+    <property name="Maker">
+      <column name="MAKER"/>
+    </property>
+    <property name="Checker">
+      <column name="CHECKER"/>
+    </property>
+    <property name="Approver">
+      <column name="APPROVER"/>
+    </property>
+    <property name="TObject">
+      <column name="TRANSACTIONOBJECT"/>
+    </property>
+    <property name="Status">
+      <column name="STATUS"/>
+    </property>
+    <property name="Action">
+      <column name="ACTION"/>
+    </property>
+    <property name="NextProcessor">
+      <column name="NEXTPROCESSOR"/>
+    </property>
+    <property name="RejectDescription">
+      <column name="REJECTDESCRIPTION"/>
+    </property>
+    <property name="Processor">
+      <column name="PROCESSOR"/>
+    </property>
+  </class>
+
+</hibernate-mapping>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+	<class name="BRIChannelSchedulerNew.Payroll.Pocos.TrxMultiPayment_Users, BRIChannelSchedulerNew" table="trxmultipayment_users">
+
+		<id name="Id">
+			<column name="ID" sql-type="Int32" not-null="true"/>
+			<generator class="native" />
+		</id>
+
+		<property name="Fitur_Id">
+			<column name="FITUR_ID" />
+		</property>
+
+		<property name="CreatedDate">
+			<column name="CREATEDDATE" />
+		</property>
+
+		<property name="LastUpdate">
+			<column name="LASTUPDATE" />
+		</property>
+
+		<property name="Client_Id">
+			<column name="CLIENT_ID" />
+		</property>
+
+		<property name="User_Id">
+			<column name="USER_ID" />
+		</property>
+
+		<property name="Currency">
+			<column name="CURRENCY" />
+		</property>
+
+		<property name="Amount">
+			<column name="AMOUNT" />
+		</property>
+
+		<property name="Info1">
+			<column name="INFO1" />
+		</property>
+
+		<property name="Info2">
+			<column name="INFO2" />
+		</property>
+
+		<property name="Info3">
+			<column name="INFO3" />
+		</property>
+
+		<property name="Status">
+			<column name="STATUS" />
+		</property>
+
+		<property name="Description">
+			<column name="DESCRIPTION" />
+		</property>
+
+	</class>
+</hibernate-mapping>

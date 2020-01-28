@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+	<class name="BRIChannelSchedulerNew.Payroll.Pocos.Booking, BRIChannelSchedulerNew" table="booking">
+
+		<id name="Id">
+			<column name="ID" sql-type="Int32" not-null="true"/>
+			<generator class="native" />
+		</id>
+		<property name="TrxId">
+			<column name="TRXID" />
+		</property>
+		<property name="FID">
+			<column name="FID" />
+		</property>
+		<property name="Fitur">
+			<column name="FITUR" />
+		</property>
+		<property name="JenisTransaksi">
+			<column name="JENISTRANSAKSI" />
+		</property>
+		<property name="ClientId">
+			<column name="CLIENTID" />
+		</property>
+		<property name="CreationDate">
+			<column name="CREATIONDATE" />
+		</property>
+		<property name="DebitAccount">
+			<column name="DEBITACCOUNT" />
+		</property>
+		<property name="DebitAccountName">
+			<column name="DEBITACCOUNTNAME" />
+		</property>
+		<property name="DebitAmount">
+			<column name="DEBITAMOUNT" />
+		</property>
+		<property name="DebitCurrency">
+			<column name="DEBITCURRENCY" />
+		</property>
+		<property name="CreditAccount">
+			<column name="CREDITACCOUNT" />
+		</property>
+		<property name="CreditAccountName">
+			<column name="CREDITACCOUNTNAME" />
+		</property>
+		<property name="CreditAmount">
+			<column name="CREDITAMOUNT" />
+		</property>
+		<property name="CreditCurrency">
+			<column name="CREDITCURRENCY" />
+		</property>
+		<property name="InstAmount">
+			<column name="INSTAMOUNT" />
+		</property>
+		<property name="InstCurrency">
+			<column name="INSTCURRENCY" />
+		</property>
+		<property name="TrxRate">
+			<column name="TRXRATE" />
+		</property>
+		<property name="TrxRemark">
+			<column name="TRXREMARK" />
+		</property>
+		<property name="TrxDate">
+			<column name="TRXDATE" />
+		</property>
+		<property name="BookType">
+			<column name="BOOKTYPE" />
+		</property>
+		<property name="DealRate">
+			<column name="DEALRATE" />
+		</property>
+		<property name="Status">
+			<column name="STATUS" />
+		</property>
+		<property name="StatusEC">
+			<column name="STATUSEC" />
+		</property>
+		<property name="Description">
+			<column name="DESCRIPTION" />
+		</property>
+		<property name="LastUpdate">
+			<column name="LASTUPDATE" />
+		</property>
+		<property name="TranCode">
+			<column name="TRANCODE" />
+		</property>
+		<property name="TellerId">
+			<column name="TELLERID" />
+		</property>
+		<property name="SpvId">
+			<column name="SPVID" />
+		</property>
+		<property name="Bucket">
+			<column name="BUCKET" />
+		</property>
+		<property name="JournalSeq">
+			<column name="JURNALSEQ" />
+		</property>
+		<property name="BookingOffice">
+			<column name="BOOKINGOFFICE" />
+		</property>
+		<property name="Log">
+			<column name="LOG" />
+		</property>
+		<property name="IsNotionalPooling">
+			<column name="ISNOTIONALPOOLING" />
+		</property>
+    <property name="TrxRemark2">
+      <column name="TRXREMARK2" />
+    </property>
+    <property name="FeeBen">
+      <column name="FEEBEN" />
+    </property>
+	</class>
+</hibernate-mapping>

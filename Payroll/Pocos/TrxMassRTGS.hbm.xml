@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.TrxMassRTGS, BRIChannelSchedulerNew" table="trxmassrtgs">
+
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="native" />
+    </id>
+    <property name="Pid">
+      <column name="PID" />
+    </property>
+    <property name="Fid">
+      <column name="FID" />
+    </property>
+    <property name="Client">
+      <column name="CLIENT" />
+    </property>
+    <property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+    <property name="CreatedTime">
+      <column name="CREATEDTIME" />
+    </property>
+    <property name="RunningTime">
+      <column name="RUNNINGTIME" />
+    </property>
+    <property name="Approver">
+      <column name="APPROVER" />
+    </property>
+    <property name="ApproverTotal">
+      <column name="APPROVERTOTAL" />
+    </property>
+    <property name="FileName">
+      <column name="FILENAME" />
+    </property>
+    <property name="FileDescription">
+      <column name="FILEDESCRIPTION" />
+    </property>
+    <property name="TObject">
+      <column name="TRANSACTIONOBJECT" />
+    </property>
+    <property name="Description">
+      <column name="DESCRIPTION" />
+    </property>
+    <property name="PassKey">
+      <column name="PASSKEYS" />
+    </property>
+    <property name="Status">
+      <column name="STATUS" />
+    </property>
+    <property name="Maker">
+      <column name="MAKER" />
+    </property>
+    <property name="Checker">
+      <column name="CHECKER" />
+    </property>
+    <property name="CheckerTotal">
+      <column name="CHECKERTOTAL" />
+    </property>
+    <property name="CP">
+      <column name="CP" />
+    </property>
+    <property name="CT">
+      <column name="CT" />
+    </property>
+    <property name="TP">
+      <column name="TP" />
+    </property>
+    <property name="TT">
+      <column name="TT" />
+    </property>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+	<class name="BRIChannelSchedulerNew.Payroll.Pocos.TrxClearingBRI, BRIChannelSchedulerNew" table="trxclearingbri">
+		<id name="Id">
+			<column name="ID" sql-type="Int32" not-null="true"/>
+			<generator class="native" />
+		</id>
+		<property name="ClientID">
+			<column name="CLIENTID" />
+		</property>
+		<property name="TrxID">
+			<column name="TRXID" />
+		</property>
+		<property name="TrxDate">
+			<column name="TRXDATE" />
+		</property>
+    <property name="CmsRefNo">
+      <column name="CMSREFNO" />
+    </property>
+		<property name="DebitAccount">
+			<column name="DEBITACCOUNT" />
+		</property>
+		<property name="DebitAccountName">
+			<column name="DEBITACCOUNTNAME" />
+		</property>
+		<property name="DebitAccountNameBrinets">
+			<column name="DEBITACCOUNTNAMEBRINETS" />
+		</property>
+		<property name="DebitAccountType">
+			<column name="DEBITACCOUNTTYPE" />
+		</property>
+		<property name="DebitAmount">
+			<column name="DEBITAMOUNT" />
+		</property>
+		<property name="DebitCurrency">
+			<column name="DEBITCURRENCY" />
+		</property>
+		<property name="RtgsTrxRef">
+			<column name="RTGSTRXREF" />
+		</property>
+		<property name="CreditAccount">
+			<column name="CREDITACCOUNT" />
+		</property>
+		<property name="CreditAccountCoded">
+			<column name="CREDITACCOUNTCODED" />
+		</property>	
+		<property name="CreditAccountName">
+			<column name="CREDITACCOUNTNAME" />
+		</property>
+		<property name="CreditAccountAddress">
+			<column name="CREDITACCOUNTADDRESS" />
+		</property>
+		<property name="CreditAccountBank">
+			<column name="CREDITACCOUNTBANK" />
+		</property>
+    <property name="CreditAccountBankName">
+      <column name="CREDITACCOUNTBANKNAME" />
+    </property>
+		<property name="CreditAccountBranch">
+			<column name="CREDITACCOUNTBRANCH" />
+		</property>
+		<property name="CreditAmount">
+			<column name="CREDITAMOUNT" />
+		</property>
+		<property name="CreditCurrency">
+			<column name="CREDITCURRENCY" />
+		</property>
+		<property name="MemberInfo">
+			<column name="MEMBERINFO" />
+		</property>
+		<property name="TrxRemark">
+			<column name="TRXREMARK" />
+		</property>
+		<property name="Status">
+			<column name="STATUS" />
+		</property>
+		<property name="CreationDate">
+			<column name="CREATIONDATE" />
+		</property>
+		<property name="LastUpdate">
+			<column name="LASTUPDATE" />
+		</property>
+		<property name="Maker">
+			<column name="MAKER" />
+		</property>
+		<property name="Checker">
+			<column name="CHECKER" />
+		</property>
+		<property name="CheckerWorkflow">
+			<column name="CHECKERWORKFLOW" />
+		</property>
+		<property name="Approver">
+			<column name="APPROVER" />
+		</property>
+		<property name="ApproverWorkflow">
+			<column name="APPROVERWORKFLOW" />
+		</property>
+		<property name="Rejecter">
+			<column name="REJECTER" />
+		</property>
+		<property name="FeeAmount">
+			<column name="FEEAMOUNT" />
+		</property>
+		<property name="FeeCurrency">
+			<column name="FEECURRENCY" />
+		</property>
+		<property name="ValueDate">
+			<column name="VALUEDATE" />
+		</property>
+		<property name="FeeOur">
+			<column name="FEEOUR" />
+		</property>
+		<property name="FeeDebet">
+			<column name="FEEDEBET" />
+		</property>
+		<property name="FeeBen">
+			<column name="FEEBEN" />
+		</property>
+		<property name="FeeCredit">
+			<column name="FEECREDIT" />
+		</property>
+		<property name="InstAmount">
+			<column name="INSTAMT" />
+		</property>
+		<property name="InstCur">
+			<column name="INSTCUR" />
+		</property>
+		<property name="VoucherCode">
+			<column name="VOUCHERCODE" />
+		</property>
+		<property name="Notification">
+			<column name="NOTIFICATION" />
+		</property>
+		<property name="SandiTrxBI">
+			<column name="SANDITRXBI" />
+		</property>
+		<property name="BucketAmt">
+			<column name="BUCKETAMT" />
+		</property>
+		<property name="BucketFee">
+			<column name="BUCKETFEE" />
+		</property>
+		<property name="JournalSeq1">
+			<column name="JURNALSEQ1" />
+		</property>
+		<property name="JournalSeq2">
+			<column name="JURNALSEQ2" />
+		</property>
+    <property name="TrxRate">
+      <column name="TRXRATE" />
+    </property>
+    <property name="BookingOffice">
+      <column name="BOOKINGOFFICE" />
+    </property>
+	</class>
+</hibernate-mapping>

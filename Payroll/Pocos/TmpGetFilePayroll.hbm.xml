@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.TmpGetFilePayroll, BRIChannelSchedulerNew" table="tmpgetfilepayroll">
+
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="native" />
+    </id>
+	
+	<property name="ClientId">
+      <column name="CLIENTID" />
+    </property>
+    <property name="ClientName">
+      <column name="CLIENTNAME" />
+    </property>
+    <property name="Fid">
+      <column name="FID" />
+    </property>
+    <property name="FName">
+      <column name="FNAME" />
+    </property>
+    <property name="Alamat">
+      <column name="ALAMAT" />
+    </property>
+    <property name="User">
+      <column name="USER" />
+    </property>
+    <property name="Pass">
+      <column name="PASS" />
+    </property>
+    <property name="Data">
+      <column name="DATA" />
+    </property>
+  </class>
+</hibernate-mapping>

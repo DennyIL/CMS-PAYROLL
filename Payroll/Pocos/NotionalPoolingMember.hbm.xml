@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.NotionalPoolingMember, BRIChannelSchedulerNew" table="notionalpoolingmember">
+
+    <id name="Id">
+      <column name="ID" sql-type="Int" not-null="true"/>
+      <generator class="identity" />
+    </id>
+    <property name="GroupCode">
+      <column name="GROUPCODE" />
+    </property>
+    <property name="AccountNumber">
+      <column name="ACCOUNTNUMBER" />
+    </property>
+    <property name="AccountName">
+      <column name="ACCOUNTNAME" />
+    </property>
+    <property name="MemberOverdraftLimit">
+      <column name="MEMBEROVERDRAFTLIMIT" />
+    </property>
+    <property name="Status">
+      <column name="STATUS" />
+    </property>
+    <property name="PreviousStatus">
+      <column name="PREVIOUSSTATUS" />
+    </property>
+    <property name="UserCreate">
+      <column name="USERCREATE" />
+    </property>
+    <property name="DateCreate">
+      <column name="DATECREATE" />
+    </property>
+    <property name="UserModified">
+      <column name="USERMODIFIED" />
+    </property>
+    <property name="DateModified">
+      <column name="DATEMODIFIED" />
+    </property>
+  </class>
+</hibernate-mapping>

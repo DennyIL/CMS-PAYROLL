@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.Mbaseandws, BRIChannelSchedulerNew" table="mbaseandws">
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="native" />
+    </id>
+    <property name="TrxId">
+      <column name="TRXID" />
+    </property>
+    <property name="FID">
+      <column name="FID" />
+    </property>
+    <property name="Fitur">
+      <column name="FITUR" />
+    </property>
+    <property name="InstructionCode">
+      <column name="INSTRUCTIONCODE" />
+    </property>
+    <property name="Status">
+      <column name="STATUS" />
+    </property>
+    <property name="Description">
+      <column name="DESCRIPTION" />
+    </property>
+    <property name="ClientId">
+      <column name="CLIENTID" />
+    </property>
+    <property name="CreatedTime">
+      <column name="CREATEDTIME" />
+    </property>
+    <property name="TrxDate">
+      <column name="TRXDATE" />
+    </property>
+    <property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+    <property name="RemittanceNumner">
+      <column name="REMITTANCENUMBER" />
+    </property>
+    <property name="TicketNumber">
+      <column name="TICKETNUMBER" />
+    </property>
+    <property name="CnNumber">
+      <column name="CNNUMBER" />
+    </property>
+    <property name="DebetAccount">
+      <column name="DEBETACCOUNT" />
+    </property>
+    <property name="DebetAccountName">
+      <column name="DEBETACCOUNTNAME" />
+    </property>
+    <property name="BenAcc">
+      <column name="BENACC" />
+    </property>
+    <property name="BenAccName">
+      <column name="BENACCNAME" />
+    </property>
+    <property name="BenAccAddress">
+      <column name="BENACCADDRESS" />
+    </property>
+    <property name="BucketAmount">
+      <column name="BUCKETAMOUNT" />
+    </property>
+    <property name="IdBooking">
+      <column name="IDBOOKING" />
+    </property>
+    <property name="Remark">
+      <column name="REMARK" />
+    </property>
+    <property name="Log">
+      <column name="LOG" />
+    </property>
+    <property name="StatusData">
+      <column name="STATUSDATA" />
+    </property>
+    <property name="BankCode">
+      <column name="BANKCODE" />
+    </property>
+    <property name="JurnalSeq">
+      <column name="JURNALSEQ" />
+    </property>
+    <property name="ChargeAmount">
+      <column name="CHARGEAMOUNT" />
+    </property>
+    <property name="ChargeType">
+      <column name="CHARGETYPE" />
+    </property>
+    <property name="RtgsTrxReff">
+      <column name="RTGSTRXREFF" />
+    </property>
+    <property name="DebitAccAddress">
+      <column name="DEBITACCADDRESS" />
+    </property>
+  </class>
+</hibernate-mapping>

@@ -1,0 +1,569 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Quartz;
+using Quartz.Impl;
+using log4net;
+using BRIChannelSchedulerNew.Payroll.Pocos;
+using BRIChannelSchedulerNew.Payroll.Helper;
+using NHibernate;
+using NHibernate.Cfg;
+using NHibernate.Expression;
+using System.Data.SqlClient;
+using System.Xml.Serialization;
+using System.IO;
+using System.Security.Cryptography;
+using System.Globalization;
+using System.Data;
+using System.Threading;
+using System.Net;
+using System.Text.RegularExpressions;
+using System.Net.Sockets;
+
+namespace BRIChannelSchedulerNew.Payroll.SharedFolder
+{
+    class GetFile : IStatefulJob
+    {
+        private static Configuration cfg;
+        private static ISessionFactory factory;
+        private static String schInfo = "";
+        private static String serverId = "20.8";
+
+        String url = "";
+        String uid = "";
+        String pass = "";
+        String pid = "";
+        String maker = "";
+        String kodeformatfile = "";
+        bool isSpecialFormat = false;
+
+        #region IJob Members
+        void IJob.Execute(JobExecutionContext context)
+        {
+            cfg = new Configuration();
+            cfg.AddAssembly("BRIChannelSchedulerNew");
+            ILog log = LogManager.GetLogger(typeof(GetFile));
+            log.Info(schInfo + "STARTING GET FILE FROM SHARED FOLDER ===");
+            try
+            {
+                //log
+                schInfo = "=== " + DateTime.Now + " ";
+                
+                if (factory == null)
+                {
+                    cfg = new Configuration();
+                    cfg.AddAssembly("BRIChannelSchedulerNew");
+                    factory = cfg.BuildSessionFactory();
+                }
+
+                ISession session = factory.OpenSession();
+                Parameter paramClientId = session.Load<Parameter>("CLIENT_SHARED_FOLDER_PAYROLL");
+                String[] CId = paramClientId.Data.Split(new String[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+
+                IList<ClientMatrix> cm = session.CreateCriteria(typeof(ClientMatrix))
+                    .Add(Expression.In("Id", CId))
+                    .List<ClientMatrix>();
+
+                foreach (ClientMatrix cm1 in cm)
+                {
+                    log.Info("for ClientID :: " + cm1.Id);
+                    AuthorityHelper ah = null;
+                    ah = new AuthorityHelper(cm1.Matrix);
+                    url = ah.GetTransactionURL(100); //log.Info(url);
+                    uid = ah.GetTransactionUID(100);
+                    pass = ah.GetTransactionPASS(100);
+                    pid = ah.GetTransactionMAKER(100); //log.Info(maker);
+                    kodeformatfile = ah.GetTransactionKodeFormatFile(100);
+
+                    if (!string.IsNullOrEmpty(kodeformatfile)) isSpecialFormat = true;
+                    string path = "";
+                    if (isSpecialFormat)//bukan format BRI
+                    {
+                        Parameter param2 = session.Load<Parameter>("FOLDER_PAYROLL_ORIGINAL_FILE");
+                        path = param2.Data;
+                    }
+                    else
+                    {
+                        Parameter param = session.Load<Parameter>("FOLDER_PAYROLL_INPUT");
+                        path = param.Data;
+                    }
+                    //tambah datetime.now di direktory
+                    //rfq, 13082015
+                    path = path + DateTime.Now.ToString("yyyyMMdd") + "\\";
+
+                    //rfq add 14082015, create direktory if not exist
+                    #region cek directory exist
+                    if (!Directory.Exists(path))
+                    {
+                        System.IO.Directory.CreateDirectory(path);
+                        log.Info("Create directory success. mkdir : " + path);
+                    }
+
+                    #endregion
+
+
+                    //get input url
+                    if (url.Contains("|"))
+                    {
+                        string[] url_temp = url.Split('|');
+                        url = url_temp[0];
+                    }
+
+                    log.Info("Url : " + url);
+                    //log.Info("User Id : " + uid);
+                    //log.Info("Pass : " + pass);
+                    log.Info("Id maker : " + pid);
+                    log.Info("Kode Format File : " + kodeformatfile);
+
+                    //IList<User> us = session.CreateCriteria(typeof(User))
+                    //    .Add(Expression.Eq("Id", Convert.ToInt32(pid)))
+                    //    .List<User>();
+                    
+                    //foreach (User u in us)
+                    //{
+                    //    maker = u.Handle;
+                    //}
+
+                    User us = session.Load<User>(Convert.ToInt32(pid));
+                    maker = us.Handle.Trim();
+
+                    log.Info("Maker : " + maker);
+                    if (string.IsNullOrEmpty(maker))
+                    {
+                        log.Error("Maker not found.");
+                        break;
+                    }
+
+                    if (url.ToUpper().StartsWith("HTTP"))
+                    {
+                        log.Info("=== Using HTTPWebRequest ===");
+
+                        try
+                        {
+
+                            #region Using HTTPWebRequest
+                            CookieContainer cookies;
+                            HttpWebResponse response;
+                            HttpWebRequest req = (HttpWebRequest)System.Net.WebRequest.Create(url);
+
+                            req.Credentials = new NetworkCredential(uid, pass);
+
+                            //proxy
+                            Parameter prmProxServ = session.Load<Parameter>("PAYROLL_PROXY_SERVER");
+                            String proxyServer = prmProxServ.Data;
+
+                            Parameter prmProxPort = session.Load<Parameter>("PAYROLL_PROXY_PORT");
+                            int proxyPort = int.Parse(prmProxPort.Data);
+
+                            WebProxy myproxy = new WebProxy(proxyServer, proxyPort);
+                            myproxy.BypassProxyOnLocal = false;
+                            req.Proxy = myproxy;
+
+                            //allow all certificate, not secure bro
+                            ServicePointManager.ServerCertificateValidationCallback += (o, c, ch, er) => true;
+
+                            req.CookieContainer = new CookieContainer();
+                            req.AllowAutoRedirect = true;
+                            cookies = req.CookieContainer;
+
+
+                            #region download file
+                            log.Info("Start download file..");
+                            response = (HttpWebResponse)req.GetResponse();
+
+                            if (response.StatusCode != HttpStatusCode.OK)
+                            {
+                                log.Error("Url Not Responding");
+                            }
+
+                            using (response)
+                            {
+                                log.Info("Using response..");
+                                using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+                                {
+                                    string html = reader.ReadToEnd();
+                                    Regex regEx = null;
+                                    //log.Info("Isi HTML : " + html);
+                                    //<a href="ST-BRI20150513094810.txt">ST-BRI20150513094810..&gt;</a>
+                                    if (html.Contains("<a href"))
+                                    {
+                                        //regEx = new Regex("<a href=\".*?\">(?<filename>.*?)</a>");
+                                        //<a href=\".*\">(?<filename>.*)</a>
+                                        //
+                                        //regEx = new Regex("<a href=(?<link>.*)>");
+                                        log.Info("Masuk yang kecil");
+                                        //regEx = new Regex("<a href=\".*?\">(?<filename>.*?)</a>");
+                                        regEx = new Regex("<a href=\"(?<filename>.*?)\">(?<filename_display>.*?)</a>");
+                                    }
+                                    else regEx = new Regex("<A href=\"(?<filename>.*?)\">(?<filename_display>.*?)</A>");
+                                    MatchCollection matches = regEx.Matches(html);
+
+
+                                    if (matches.Count > 0)
+                                    {
+                                        foreach (Match match in matches)
+                                        {
+                                            log.Info("Masuk foreach...");
+                                            log.Info("Nama file : " + match.Groups["filename"].Value);
+                                            if (match.Success && (match.Groups["filename"].Value.EndsWith(".txt") || match.Groups["filename"].Value.EndsWith(".TXT") || match.Groups["filename"].Value.EndsWith(".csv") || match.Groups["filename"].Value.EndsWith(".CSV")))
+                                            {
+                                                log.Info("Connected and data match...");
+                                                String fname = match.Groups["filename"].Value;
+                                                String NamaFile = maker + "_" + match.Groups["filename"].Value;
+
+                                                //check if file exist on both format
+                                                string queryPath = "";
+                                                if (isSpecialFormat) queryPath = "FilePathOriginalFile";
+                                                else queryPath = "FilePath";
+
+                                                IList<TrxPayroll> o = session.CreateCriteria(typeof(TrxPayroll))
+                                                    .Add(Expression.Like("FilePath", NamaFile, MatchMode.Anywhere))
+                                                    //.Add(Expression.Not(Expression.In("Status", 4)))
+                                                    .Add(Expression.Eq("ClientID", cm1.Id))
+                                                    .List<TrxPayroll>();
+
+                                                IList<TrxPayroll> opx = session.CreateCriteria(typeof(TrxPayroll))
+                                                    .Add(Expression.Like("OriginalFilePath", NamaFile, MatchMode.Anywhere))
+                                                    //.Add(Expression.Not(Expression.In("Status", 4)))
+                                                    .Add(Expression.Eq("ClientID", cm1.Id))
+                                                    .List<TrxPayroll>();
+
+
+                                                if (o.Count < 1 && opx.Count < 1)
+                                                {
+                                                    //download file
+                                                    //Request.Method = "MOVE";
+                                                    log.Info("downloading file...");
+                                                    WebClient wc = new WebClient();
+                                                    wc.Credentials = new NetworkCredential(uid, pass);
+                                                    //using proxy
+                                                    wc.Proxy = myproxy;
+                                                    //download
+                                                    wc.DownloadFile(url + fname, path + NamaFile);
+                                                    
+                                                    string pathSavedFile = path + NamaFile;
+                                                    log.Info("Download complete, file save as : " + pathSavedFile);
+
+                                                    #region inser to DB
+
+                                                    DateTime schedulle = DateTime.Parse("0001-01-01 00:00:00");
+
+                                                    //String fname = DateTime.Now.ToString("ddMMyyhhmmss") + "_" + pathSavedFile;
+                                                    TrxPayroll trx = new TrxPayroll();
+                                                    trx.CreatedTime = DateTime.Now;
+                                                    trx.LastUpdate = DateTime.Now;
+                                                    //ex : dirgantara/admin
+
+                                                    Client theClients = session.Load<Client>(cm1.Id);
+
+                                                    trx.CreatedBy = theClients.Handle.Trim() + "/" + maker;
+                                                    trx.Maker = maker + " - " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+                                                    trx.Approver = "";
+
+                                                    if (isSpecialFormat)//bukan format BRI
+                                                    {
+                                                        trx.OriginalFilePath = pathSavedFile;
+                                                        trx.FileFormatCode = int.Parse(kodeformatfile.Trim());
+                                                        trx.Status = ParameterHelper.PAYROLL_WAITING_CONVERT;//waiting file convert
+                                                    }
+                                                    else
+                                                    {
+                                                        trx.FileName = pathSavedFile;
+                                                        trx.Status = ParameterHelper.PAYROLL_WAITINGSEQNUM;//waiting seq number
+                                                    }
+
+                                                    trx.FileDescription = NamaFile;
+                                                    
+                                                    //Client Acc
+                                                    //Parameter accParam = session.Load<Parameter>("PAYROLL_ACC_SEMEN_TONASA");//50298
+                                                    //int maxResult = int.Parse(maxTrx.Data);
+
+                                                    trx.DebitAccount = "000000000000000";//isi di upload file
+                                                    trx.Description = "WAITING||0||";//isi di upload file
+                                                    trx.ProcessTime = schedulle;
+                                                    trx.FilePath = pathSavedFile;
+                                                    trx.ClientID = cm1.Id;
+                                                    trx.Fee = GetTransactionFee(session, 100, cm1);
+                                                    trx.PassKey = "";
+                                                    trx.SharedFolderStatus = "YES|";
+
+                                                    //FileUpload.PostedFile.SaveAs(path + fname);
+                                                    AuditHelper.Log(session, maker, "Payroll Upload File Host to Host", 101, trx.ToString());
+                                                    session.Save(trx);
+                                                    session.Flush();
+
+
+                                                    /*-------------------------------------------------*/
+
+                                                    Transaction tx = new Transaction();
+                                                    tx.Handle = "ADD PAYROLLBRI";
+                                                    tx.TransactionId = 101;
+                                                    tx.CreatedTime = DateTime.Now;
+                                                    tx.VerifiedTime = DateTime.Now;
+                                                    tx.ApprovedTime = DateTime.Now;
+                                                    tx.Maker = maker + " - " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+                                                    tx.TObject = trx.ToString();
+                                                    tx.ClientId = cm1.Id;
+                                                    tx.Status = 1;
+                                                    tx.Action = "ADD";
+                                                    tx.Checker = "";
+                                                    tx.Approver = "";
+                                                    tx.Checker = "";
+                                                    tx.Approver = "";
+                                                    tx.CheckWork = 0;
+                                                    tx.CheckTotal = 0;
+                                                    tx.ApproveWork = 0;
+                                                    tx.CheckTotal = 0;
+
+
+
+                                                    ClientWorkflow cw = session.CreateCriteria(typeof(ClientWorkflow))
+                                                        .Add(Expression.Eq("Id", cm1.Id))
+                                                        .UniqueResult<ClientWorkflow>();
+                                                    
+                                                    WorkflowHelper wh = new WorkflowHelper(cw.Workflow);
+                                                    if (!(null == wh))
+                                                    {
+                                                        Workflow flow = wh.GetWorkflow(100);
+                                                        if (!(null == flow))
+                                                        {
+                                                            //tx.Maker = "";
+                                                            //direct payroll
+                                                            tx.Approver = "";
+                                                            tx.CheckTotal = 0;//flow.TotalVerifier;
+                                                            tx.ApproveTotal = 0;// flow.TotalApprover;
+
+                                                            if (!ah.isDirectTransaction(100))
+                                                            {
+                                                                tx.CheckTotal = flow.TotalVerifier;
+                                                                tx.ApproveTotal = flow.TotalApprover;
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            throw new Exception("Matrix PAYROLL is Null for this Client");
+                                                        }
+                                                    }
+
+                                                    session.Save(tx);
+                                                    session.Flush();
+
+                                                    #endregion
+
+
+                                                    #region meninggalkan jejak
+                                                    log.Info("Start upload = " + url + fname.Substring(0, fname.Length - 4) + ".ACK");
+                                                    wc.UploadFile(url + fname.Substring(0, fname.Length - 4) + ".ACK", "PUT", path + NamaFile);
+                                                    log.Info("Upload response sukses.");
+
+                                                    #endregion
+                                                }
+                                                else
+                                                {
+                                                    log.Info(schInfo + " No New File ===");
+                                                }
+                                            }
+                                            else
+                                            {
+                                                log.Info("Tidak ada file sesuai kriteria.");
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            #endregion
+
+                            #endregion
+
+                        }
+                        catch (Exception e)
+                        {
+                            log.Error("Ada Error, Message : " + e.Message + " Stack trace : " + e.StackTrace + " Ineer Exc : " + e.InnerException);
+                        }
+
+                    }
+                    else if (url.ToUpper().StartsWith("FTP"))
+                    {
+                        //ftp://10.107.10.150/kai-payment/OUTGOING/
+                        log.Info("=== Using FTP ====");
+                        log.Info("URL Input : " + url);
+
+                        #region Using FTP
+                        //string ipFTP = "";
+                        //string subDir = "";
+
+                        ////Get FTP IP
+                        //ipFTP = url;
+                        //string search = "0123456789";
+                        //int posIP = ipFTP.LastIndexOfAny(search.ToCharArray());
+                        //string tempIP = ipFTP.Remove(posIP + 1);
+                        //log.Info("TempIP : " + tempIP);
+                        //ipFTP = tempIP.Replace("ftp://", "");
+                        //log.Info("IP FTP : " + ipFTP);
+
+
+                        ////get FTP Directory
+                        //string src = url;
+                        //int pos = url.LastIndexOfAny(search.ToCharArray());
+                        //subDir = src.Remove(0, pos + 1);
+                        //log.Info("Dir FTP : " + subDir);
+
+                        ////Inisiate FTP
+                        //FTPHelper ff = new FTPHelper();
+                        //ff.setRemoteHost(ipFTP);
+                        //ff.setRemotePort(21021);
+                        ////ff.setRemoteUser("");
+                        ////ff.setRemotePass("");
+
+                        ////Set Socket
+                        //Socket clientSoc = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                        //clientSoc.Connect(ipFTP, 21021);
+                        //ff.setSocket(clientSoc);
+                        ////ff.SendUserPassword();
+
+                        //bool connect = ff.login();
+                        //ff.chdir(subDir);
+                        ////string tes1 = "*" + util.getGlobalParam("MT100_PREFIX") + "*";
+                        //string[] fileList = ff.getFileList("*"); //ff.getFileList("*" + util.getGlobalParam("MT100_PREFIX") + "*");
+                        //ff.close();
+
+                        //for (int i = 0; i < fileList.Length; i++)
+                        //{
+                        //    log.Info("File Name : " + fileList[i]);
+                        //    string NamaFile = fileList[i].Trim();
+
+                        //    ////check if file exist on both format
+                        //    //string queryPath = "";
+                        //    //if (isSpecialFormat) queryPath = "FilePathOriginalFile";
+                        //    //else queryPath = "FilePath";
+
+                        //    IList<TrxPaymentPriorityBRI> o = session.CreateCriteria(typeof(TrxPaymentPriorityBRI))
+                        //        .Add(Expression.Like("FilePath", NamaFile, MatchMode.Anywhere))
+                        //        .Add(Expression.Eq("ClientId", cm1.Id))
+                        //        .List<TrxPaymentPriorityBRI>();
+
+                        //    IList<TrxPaymentPriorityBRI> opx = session.CreateCriteria(typeof(TrxPaymentPriorityBRI))
+                        //        .Add(Expression.Like("FilePathOriginalFile", NamaFile, MatchMode.Anywhere))
+                        //        .Add(Expression.Eq("ClientId", cm1.Id))
+                        //        .List<TrxPaymentPriorityBRI>();
+
+
+                        //    if (o.Count < 1 && opx.Count < 1 && (NamaFile.ToUpper().Contains(".TXT") || NamaFile.ToUpper().Contains(".CSV")))
+                        //    {
+                        //        //download file
+                        //        log.Info("Start Downloading file...");
+                        //        //Inisiate FTP
+                        //        ff = new FTPHelper();
+                        //        ff.setRemoteHost(ipFTP);
+                        //        ff.setRemotePort(21021);
+                        //        //ff.setRemoteUser("");
+                        //        //ff.setRemotePass("");
+
+                        //        //Set Socket
+                        //        clientSoc = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                        //        clientSoc.Connect(ipFTP, 21021);
+                        //        ff.setSocket(clientSoc);
+                        //        //ff.SendUserPassword();
+
+                        //        connect = ff.login();
+                        //        ff.chdir(subDir);
+                        //        //string tes1 = "*" + util.getGlobalParam("MT100_PREFIX") + "*";
+                        //        //Download
+                        //        ff.download(NamaFile, path + NamaFile);
+                        //        log.Info("Download Success..");
+
+                        //        //Delete File
+                        //        ff.deleteRemoteFile(NamaFile);
+                        //        log.Info("DeleteSuccess..");
+
+                        //        ff.close();
+
+
+                        //        //inser to DB
+                        //        TrxPaymentPriorityBRI trx = new TrxPaymentPriorityBRI();
+                        //        if (isSpecialFormat)
+                        //        {
+                        //            trx.SharedFolder = 100 + int.Parse(kodeformatfile);
+                        //            trx.FilePathOriginalFile = path + NamaFile;
+                        //            trx.Status = ParameterHelper.TRXPP_WAITING_CONVERT;
+                        //        }
+                        //        else
+                        //        {
+                        //            trx.Status = ParameterHelper.TRXPP_WAITING_FILE_CHECK;
+                        //            trx.FilePath = path + NamaFile;
+                        //            trx.SharedFolder = 100;
+                        //        }
+                        //        trx.SharedFolderStatus = "";
+                        //        trx.ClientId = cm1.Id;
+                        //        trx.FileDescription = NamaFile.Substring(0, NamaFile.Length - 4) + "_SHARED_FOLDER";
+                        //        trx.LastUpdate = DateTime.Now;
+                        //        trx.Description = ParameterHelper.TRXDESCRIPTION_WAITING;
+                        //        trx.ServerID = serverId;
+                        //        trx.Fid = 1140;//apa beda???
+                        //        trx.Pid = Convert.ToInt32(pid);
+                        //        trx.CreatedTime = DateTime.Now;
+                        //        session.Save(trx);
+                        //        session.Flush();
+                        //        log.Info("Save data Success to table TrxPaymentPriorityBRI");
+                        //    }
+                        //}
+                        #endregion
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex);
+                factory.Close();
+                factory.Dispose();
+                factory = null;
+                cfg = null;
+                GC.Collect();
+            }
+            log.Info(schInfo + "End Process Get File ===");
+        }
+
+        #endregion
+
+
+
+        private static string SubstringBetween(string value, string a, string b)
+        {
+            int posA = value.IndexOf(a);
+            int posB = value.LastIndexOf(b);
+            if (posA == -1)
+            {
+                return "";
+            }
+            if (posB == -1)
+            {
+                return "";
+            }
+            int adjustedPosA = posA + a.Length;
+            if (adjustedPosA >= posB)
+            {
+                return "";
+            }
+            return value.Substring(adjustedPosA, posB - adjustedPosA);
+        }
+
+
+        private float GetTransactionFee(ISession session, int fid, ClientMatrix cm)
+        {
+            float _result = 0;
+            try
+            {
+                AuthorityHelper ah = new AuthorityHelper(cm.Matrix);
+                _result = ah.GetTransactionFee(session, fid, 1);
+            }
+            catch
+            {
+                _result = 111;
+            }
+            return _result;
+        }
+
+    }
+}

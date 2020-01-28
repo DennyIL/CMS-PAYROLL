@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.TrxPayroll, BRIChannelSchedulerNew" table="trxpayrolls">
+
+    <id name="Id">
+      <column name="ID" not-null="true"/>
+      <generator class="uuid.hex" />
+    </id>
+	  <property name="SeqNumber">
+      <column name="SEQNUMBER" />
+    </property>
+    <property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+    <property name="CreatedTime">
+      <column name="CREATEDTIME" />
+    </property>
+    <property name="CreatedBy">
+      <column name="CREATEDBY" />
+    </property>
+    <property name="Maker">
+      <column name="MAKER" />
+    </property>
+	<property name="Checker">
+      <column name="CHECKER" />
+    </property>
+	<property name="Approver">
+      <column name="APPROVER" />
+    </property>
+	<property name="Rejecter">
+      <column name="REJECTER" />
+    </property>
+    <property name="FileName">
+      <column name="FILENAME" />
+    </property>
+	<property name="OriginalFilePath">
+      <column name="ORIGINALFILEPATH" />
+    </property>
+	<property name="FileFormatCode">
+      <column name="FILEFORMATCODE" />
+    </property>
+    <property name="DebitAccount">
+      <column name="DEBITACCOUNT" />
+    </property>
+	<property name="FileDescription">
+      <column name="FILEDESCRIPTION" />
+    </property>
+    <property name="Description">
+      <column name="DESCRIPTION" />
+    </property>
+    <property name="Status">
+      <column name="STATUS" />
+    </property>
+    <property name="ProcessTime">
+    <column name="PROCESSTIME" />
+    </property>
+    <property name="FilePath">
+      <column name="FILEPATH" />
+    </property>
+    <property name="ClientID">
+      <column name="CLIENTID" />
+    </property>
+	<property name="TotalTrx">
+      <column name="TOTALTRX" />
+    </property>
+	<property name="Fee">
+      <column name="FEE" />
+    </property>
+	<property name="StatusEmail">
+      <column name="STATUSEMAIL" />
+    </property>
+    <property name="PassKey">
+      <column name="PASSKEY" />
+    </property>
+	<property name="ErrorDescription">
+      <column name="ERRORDESCRIPTION" />
+    </property>
+	<property name="SharedFolderStatus">
+      <column name="SHAREDFOLDERSTATUS" />
+    </property>
+	<property name="FileMassInq">
+      <column name="FILEMASSINQ" />
+    </property>
+    <property name="IsPayrollBankLain">
+      <column name="ISPAYROLLBANKLAIN" />
+    </property>
+    <property name="FeeRTG">
+      <column name="FEERTG" />
+    </property>
+    <property name="FeeLLG">
+      <column name="FEELLG" />
+    </property>
+    <property name="FeeBRIS">
+      <column name="FEEBRIS" />
+    </property>
+    <property name="AmountFromIADebet">
+      <column name="AMOUNTFROMIADEBET" />
+    </property>
+    <property name="AmountUsed">
+      <column name="AMOUNTUSED" />
+    </property>
+    <property name="IdBooking1">
+      <column name="IDBOOKING1" />
+    </property>
+    <property name="IdBooking2">
+      <column name="IDBOOKING2" />
+    </property>
+    <property name="IdBooking3">
+      <column name="IDBOOKING3" />
+    </property>
+    <property name="IdBooking4">
+      <column name="IDBOOKING4" />
+    </property>
+    <property name="FileNameBris">
+      <column name="FILENAMEBRIS" />
+    </property>
+    
+    <property name="StatusIFT">
+      <column name="STATUSIFT" />
+    </property>
+    <property name="StatusBRIS">
+      <column name="STATUSBRIS" />
+    </property>
+    <property name="JSeqHold">
+      <column name="JSEQHOLD" />
+    </property>
+    
+    <property name="RetryPosition">
+      <column name="RETRYPOSITION" />
+    </property>
+    
+    <property name="FileNameBrisReq">
+      <column name="FILENAMEBRISREQ" />
+    </property>
+
+    <property name="FileNameBrisResp">
+      <column name="FILENAMEBRISRESP" />
+    </property>
+
+    <property name="SentFtpBrisTime">
+      <column name="SENTFTPBRISTIME" />
+    </property>
+
+    <property name="LogFtpBris">
+      <column name="LOGFTPBRIS" />
+    </property>
+    
+    
+    <bag name="TrxPayrollDetail" inverse="true" lazy="true">
+      <key column="Pid"/>
+      <one-to-many class="BRIChannelSchedulerNew.Payroll.Pocos.TrxPayrollDetail, BRIChannelSchedulerNew"/>
+    </bag>
+  </class>
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.TrxPayrollDetail, BRIChannelSchedulerNew" table="trxpayrolldetails">
+    <id name="Id">
+      <column name="ID" not-null="true"/>
+      <generator class="native"/>
+    </id>
+    
+    <property name="Name">
+      <column name="NAME" />
+    </property>
+	<!-- <property name="Pid">
+      <column name="PID" />
+    </property> -->
+    <property name="Account">
+      <column name="ACCOUNT" />
+    </property>
+    <property name="Amount">
+      <column name="AMOUNT" />
+    </property>
+    <property name="Status">
+      <column name="STATUS" />
+    </property>
+    <property name="Description">
+      <column name="DESCRIPTION" />
+    </property>
+	<property name="ErrorDescription">
+      <column name="ERRORDESCRIPTION" />
+    </property>
+	<property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+	<property name="Email">
+      <column name="EMAIL" />
+    </property>
+	<property name="EmailTransactionId">
+      <column name="EMAILTRANSACTIONID" />
+    </property>
+	<property name="CustomerReff">
+      <column name="CUSTOMERREFF" />
+    </property>
+
+    <property name="BankCode">
+      <column name="BANKCODE" />
+    </property>
+    <property name="BenAddress">
+      <column name="BENADDRESS" />
+    </property>
+    <property name="InstructionCode">
+      <column name="INSTRUCTIONCODE" />
+    </property>
+    <property name="IdBooking">
+      <column name="IDBOOKING" />
+    </property>
+    <property name="IdMBASEAndWS">
+      <column name="IDMBASEANDWS" />
+    </property>
+    <property name="TrxRemark">
+      <column name="TRXREMARK" />
+    </property>
+    <property name="RemittanceNumber">
+      <column name="REMITTANCENUMBER" />
+    </property>
+
+    <many-to-one name="Parent" class="BRIChannelSchedulerNew.Payroll.Pocos.TrxPayroll, BRIChannelSchedulerNew" column="pid"/>
+  </class>
+</hibernate-mapping>

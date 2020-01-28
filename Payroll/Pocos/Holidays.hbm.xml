@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+    <class name="BRIChannelSchedulerNew.Payroll.Pocos.Holidays, BRIChannelSchedulerNew" table="holidays">
+
+        <id name="Id">
+            <column name="ID" not-null="true"/>
+            <generator class="assigned" />
+        </id>
+
+        <property name="Tanggal">
+            <column name="TANGGAL" />
+        </property>
+
+        <property name="Keterangan">
+            <column name="KETERANGAN" />
+        </property>
+
+        <property name="FunctionId">
+            <column name="FUNCTIONID" />
+        </property>
+    </class>
+
+</hibernate-mapping>

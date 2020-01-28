@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.BankKliring, BRIChannelSchedulerNew" table="bankkliring">
+
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="native" />
+    </id>
+    <property name="Code">
+      <column name="CODE" />
+    </property>
+    <property name="KodeInduk">
+      <column name="KODEINDUK" />
+    </property>
+    <property name="Nama">
+      <column name="NAMA" />
+    </property>
+    <property name="EntityId">
+      <column name="ENTITYID" />
+    </property>
+    <property name="Address1">
+      <column name="ADDRESS1" />
+    </property>
+    <property name="Address2">
+      <column name="ADDRESS2" />
+    </property>
+    <property name="Address3">
+      <column name="ADDRESS3" />
+    </property>
+    <property name="BankCode">
+      <column name="BANKCODE" />
+    </property>
+    <property name="SandiKota">
+      <column name="SANDIKOTA" />
+    </property>
+    <property name="SandiPropinsi">
+      <column name="SANDIPROPINSI" />
+    </property>
+    <property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+    <property name="JenisUsaha">
+      <column name="JENISUSAHA" />
+    </property>
+  </class>
+</hibernate-mapping>

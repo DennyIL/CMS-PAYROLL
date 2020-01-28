@@ -1,0 +1,462 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Quartz;
+using Quartz.Impl;
+using log4net;
+using BRIChannelSchedulerNew.Payroll.Pocos;
+using BRIChannelSchedulerNew.Payroll.Helper;
+using NHibernate;
+using NHibernate.Cfg;
+using NHibernate.Expression;
+using System.Data.SqlClient;
+using System.Xml.Serialization;
+using System.IO;
+using System.Security.Cryptography;
+using System.Globalization;
+using System.Data;
+using System.Threading;
+using System.Net;
+using System.Collections.Specialized;
+using System.Net.Mail;
+
+namespace BRIChannelSchedulerNew.Payroll.SharedFolder
+{
+    class UploadFileResponse : IStatefulJob
+    {
+        private static Configuration cfg;
+        private static ISessionFactory factory;
+        private static String schInfo = "";
+
+        String url = "";
+        String uid = "";
+        String pass = "";
+        String pid = "0";
+        String maker = "";
+        String Email = "";
+        int kodeFormatFile = 0;
+        String Ext = "";
+        int recordGagal = 0;
+        int recordAck = 0;
+        int recordNAPR = 0;
+        int totalRecord = 0;
+
+
+        void IJob.Execute(JobExecutionContext context)
+        {
+            cfg = new Configuration();
+            cfg.AddAssembly("BRIChannelSchedulerNew");
+            ILog log = LogManager.GetLogger(typeof(UploadFileResponse));
+            log.Info(schInfo + "STARTING SCHEDULLER COPY FILE RESPONSE PAYROLL TO SHARED FOLDER ===");
+            try
+            {
+                //log
+                schInfo = "=== " + DateTime.Now + " ";
+
+                if (factory == null)
+                {
+                    cfg = new Configuration();
+                    cfg.AddAssembly("BRIChannelSchedulerNew");
+                    factory = cfg.BuildSessionFactory();
+                }
+                ISession session = factory.OpenSession();
+                Parameter paramReport = session.Load<Parameter>("FOLDER_PAYROLL_OUTPUT");
+                String pathReport = paramReport.Data;
+                Parameter paramClientId = session.Load<Parameter>("CLIENT_SHARED_FOLDER_PAYROLL");
+                String[] CId = paramClientId.Data.Split(new String[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+                IList<ClientMatrix> cm = session.CreateCriteria(typeof(ClientMatrix))
+                    .Add(Expression.In("Id", CId))
+                    .List<ClientMatrix>();
+
+                foreach (ClientMatrix cm1 in cm)
+                {
+                    log.Info("For ClientID : " + cm1.Id);
+                    AuthorityHelper ah = new AuthorityHelper(cm1.Matrix);
+                    url = ah.GetTransactionURL(100); //log.Info(url);
+                    uid = ah.GetTransactionUID(100);
+                    pass = ah.GetTransactionPASS(100);
+                    pid = ah.GetTransactionMAKER(100); //log.Info(maker);
+                    Email = ah.GetTransactionEmail(100);
+
+
+                    //get input url
+                    if (url.Contains("|"))
+                    {
+                        string[] url_temp = url.Split('|');
+                        url = url_temp[1];
+                    }
+
+                    log.Info("Url : " + url);
+                    //log.Info("User Id : " + uid);
+                    //log.Info("Pass : " + pass);
+                    log.Info("Id maker : " + pid);
+
+
+                    IList<User> us = session.CreateCriteria(typeof(User))
+                        .Add(Expression.Eq("Id", Convert.ToInt32(pid)))
+                        .List<User>();
+                    foreach (User u in us)
+                    {
+                        maker = u.Handle;
+                    }
+                    log.Info("Maker" + maker);
+
+
+                    #region get trx with file error (file payroll belum di eksekusi)
+                    IList<TrxPayroll> ohno = session.CreateCriteria(typeof(TrxPayroll))
+                           .Add(Expression.Eq("ClientID", cm1.Id))
+                           .Add(Expression.Eq("SharedFolderStatus", "YES|"))
+                           .Add(Expression.Like("FileDescription", maker, MatchMode.Anywhere))
+                           .Add(Expression.Eq("Status", ParameterHelper.TRXSTATUS_REJECT))
+                           .List<TrxPayroll>();
+
+                    log.Info("Clien Id = " + cm1.Id + ". Total File Error = " + ohno.Count.ToString());
+
+                    foreach (TrxPayroll ppp in ohno)
+                    {
+                        FileInfo fi = new FileInfo(ppp.FilePath);
+                        string filename_error = fi.Name;
+                        TextWriter tw1 = new StreamWriter(pathReport + filename_error.Substring(0, filename_error.Length - 4) + ".nack");
+
+                        //generate NACK
+                        int counter = 0;
+                        IList<TrxPayrollDetail> listPayDetail = ppp.TrxPayrollDetail;
+
+                        foreach (TrxPayrollDetail detail in listPayDetail)
+                        {
+                            string a = "";
+                            string text_status = "";
+
+                            if (detail.Status == ParameterHelper.TRXSTATUS_SUCCESS) text_status = "SUCCESS - " + detail.Description.Replace(",", " ");
+                            else text_status = "REJECTED - " + detail.Description.Replace(",", " ");
+
+                            if (counter == 0)
+                            {
+                                a = "NO,NAMA,ACCOUNT,AMOUNT,EMAIL,CUSTOMERREFF,STATUS";
+                                tw1.WriteLine(a);
+                            }
+
+                            int no_urut = counter + 1;
+                            a = no_urut.ToString() + "," + detail.Name + "," + detail.Account + "," + detail.Amount + "," + detail.Email + "," + detail.CustomerReff + "," + text_status;
+                            tw1.WriteLine(a);
+
+                            counter++;
+                        }
+                        string[] batch_desc = ppp.Description.Split('|');//get batch desc
+                        tw1.WriteLine(batch_desc[0]);
+                        tw1.Close();
+                        log.Info("Generate File NACK Success");
+                        Ext = ".nack";
+                        string outUpload = "";
+                        if (UploadToSharedFolder("3", filename_error, pathReport, log, session, cm1, ppp.Id, out outUpload))
+                        {
+                            ppp.SharedFolderStatus += "1:NOT|";//a.k.a NACK
+                        }
+                        else
+                        {
+                            ppp.SharedFolderStatus += "Exception on NACK||";
+                            ppp.ErrorDescription = "Exception on NACK||" + outUpload;
+                        }
+                        //update database
+                        session.Update(ppp);
+                        session.Flush();
+                    }
+                    #endregion
+
+
+
+                    #region get trx with detail error (file processed by HOST)
+                    IList<TrxPayroll> ohyes = session.CreateCriteria(typeof(TrxPayroll))
+                           .Add(Expression.Eq("ClientID", cm1.Id))
+                           .Add(Expression.Eq("SharedFolderStatus", "YES|"))
+                           .Add(Expression.Like("FileDescription", maker, MatchMode.Anywhere))
+                           .Add(Expression.Eq("Status", ParameterHelper.TRXSTATUS_COMPLETE))
+                           .List<TrxPayroll>();
+
+                    log.Info("Clien Id = " + cm1.Id + ". Total File Error = " + ohno.Count.ToString());
+
+                    foreach (TrxPayroll ppp in ohyes)
+                    {
+                        FileInfo fi = new FileInfo(ppp.FilePath);
+                        string filename_error = fi.Name;
+                        TextWriter tw1 = new StreamWriter(pathReport + filename_error.Substring(0, filename_error.Length - 4) + ".ack");
+
+                        //generate NACK
+                        int counter = 0;
+                        IList<TrxPayrollDetail> listPayDetail = ppp.TrxPayrollDetail;
+                        totalRecord = listPayDetail.Count();
+                        
+                        foreach (TrxPayrollDetail detail in listPayDetail)
+                        {
+                            string a = "";
+                            string text_status = "";
+
+                            if (detail.Status == ParameterHelper.TRXSTATUS_SUCCESS)
+                            {
+                                text_status = "SUCCESS - " + detail.Description.Replace(",", " ");
+                                recordAck++;
+                            }
+                            else
+                            {
+                                text_status = "REJECTED - " + detail.Description.Replace(",", " ");
+                                recordNAPR++;
+                            }
+
+                            if (counter == 0)
+                            {
+                                a = "NO,NAMA,ACCOUNT,AMOUNT,EMAIL,CUSTOMERREFF,STATUS";
+                                tw1.WriteLine(a);
+                            }
+
+                            int no_urut = counter + 1;
+                            a = no_urut.ToString() + "," + detail.Name + "," + detail.Account + "," + detail.Amount + "," + detail.Email + "," + detail.CustomerReff + "," + text_status;
+                            tw1.WriteLine(a);
+                            counter++;
+                        }
+                        tw1.Close();
+                        log.Info("Generate File ACK Success");
+                        Ext = ".ack";
+                        string outUpload = "";
+                        if (UploadToSharedFolder("", filename_error, pathReport, log, session, cm1, ppp.Id, out outUpload))
+                        {
+                            ppp.SharedFolderStatus += "1:ACK|";//a.k.a NACK
+                        }
+                        else
+                        {
+                            ppp.SharedFolderStatus += "Exception on ACK||";
+                            ppp.ErrorDescription = "Exception on ACK||" + outUpload;
+                        }
+                        //update database
+                        session.Update(ppp);
+                        session.Flush();
+                    }
+                    #endregion
+
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error(ex.Message + " = " + ex.InnerException + " = " + ex.StackTrace);
+                factory.Close();
+                factory.Dispose();
+                factory = null;
+                cfg = null;
+                GC.Collect();
+            }
+            log.Info(schInfo + "END SCHEDULLER COPY FILE RESPONSE PP TO SHARED FOLDER ===");
+        }
+
+
+        private Boolean UploadToSharedFolder(String errorLevel, String filename, String pathReport, ILog log, ISession session, ClientMatrix cm1, String pid, out string outUpload)
+        {
+            outUpload = "";
+            bool result = true;
+            try
+            {
+                WebClient wcUpload = new WebClient();
+                if (filename != "")
+                {
+                    String filepath = Path.GetFullPath(pathReport + filename.Substring(0, filename.Length - 4) + Ext);
+                    if (url.ToUpper().StartsWith("HTTP"))
+                    {
+                        log.Info("== Ready send '===" + filepath + "===' to shared folder ==");
+                        
+                        wcUpload.Credentials = new NetworkCredential(uid, pass);
+
+                        //proxy
+                        Parameter prmProxServ = session.Load<Parameter>("PAYROLL_PROXY_SERVER");
+                        String proxyServer = prmProxServ.Data;
+                        
+                        Parameter prmProxPort = session.Load<Parameter>("PAYROLL_PROXY_PORT");
+                        int proxyPort = int.Parse(prmProxPort.Data);
+
+                        WebProxy myproxy = new WebProxy(proxyServer, proxyPort);
+                        myproxy.BypassProxyOnLocal = false;
+                        wcUpload.Proxy = myproxy;
+
+                        //allow all certificate, not secure bro
+                        ServicePointManager.ServerCertificateValidationCallback += (o, c, ch, er) => true;
+                        wcUpload.UploadFile(url + filename.Substring(0, filename.Length - 4).Replace(maker + "_", "") + Ext, "PUT", filepath);
+                        log.Info("Upload Success");
+                    }
+
+                    #region email notification
+                    //send email for nack transactions
+                    //if (Ext.Equals(".nack"))
+                    if (!string.IsNullOrEmpty(Ext))
+                    {
+                        log.Info("=== Start generate email ===");
+                        MailMessage message = new MailMessage();
+                        String[] EmailRecipients = Email.Split(new String[] { "|" }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (string to in EmailRecipients)
+                        {
+                            message.To.Add(to);
+                        }
+
+                        Parameter prm = session.Load<Parameter>("EMAIL_ADMINISTRATOR");
+                        String prmEmailAdmin = prm.Data;
+                        message.From = new MailAddress(prmEmailAdmin, "Administrator CMS BRI");
+                        message.Subject = "Payroll Report Notification - Cash Management System BRI";
+
+                        String body = "";
+                        //CSS Table
+                        body += "<style>table {border-collapse: collapse;}table, td, th {border: 1px solid black; font-size: 10px}";
+                        body += "td {padding: 5px;}th {background-color: grey;}</style>";
+
+                        string status_trx = "";
+                        string status_trx_en = "";
+                        string text_jumlah_record = "";
+                        string text_jumlah_record_en = "";
+                        if (Ext.Equals(".nack"))
+                        {
+                            status_trx = "gagal";
+                            status_trx_en = "failed";
+                            text_jumlah_record = "Jumlah record yang " + status_trx.ToUpper() + " = " + recordGagal.ToString() + " dari TOTAL record = " + totalRecord.ToString() + "<br /><br />";
+                            text_jumlah_record_en = "There are " + status_trx_en.ToUpper() + " transactions = " + recordGagal.ToString() + " from total transactions = " + totalRecord.ToString() + "<br /><br />";
+                        }
+                        else if (Ext.Equals(".ack"))
+                        {
+                            status_trx = "berhasil";
+                            status_trx_en = "success";
+                            text_jumlah_record = "Jumlah record yang " + status_trx.ToUpper() + " = " + recordAck.ToString() + " dari TOTAL record = " + totalRecord.ToString() + "<br /><br />";
+                            text_jumlah_record_en = "There are " + status_trx_en.ToUpper() + " transactions = " + recordAck.ToString() + " from total transactions = " + totalRecord.ToString() + "<br /><br />";
+                        }
+                        else if (Ext.Equals(".napr"))
+                        {
+                            status_trx = "tidak berhasil";
+                            status_trx_en = "not success";
+                            text_jumlah_record = "Jumlah record yang " + status_trx.ToUpper() + " = " + recordNAPR.ToString() + " dari TOTAL record = " + totalRecord.ToString() + "<br /><br />";
+                            text_jumlah_record_en = "There are " + status_trx_en.ToUpper() + " transactions = " + recordNAPR.ToString() + " from total transactions = " + totalRecord.ToString() + "<br /><br />";
+                        }
+
+                        body += "Terdapat transaksi yang " + status_trx + ".<br />";
+                        body += "Dengan nama file " + filename.Substring(0, filename.Length - 4) + Ext + "<br />";
+                        string bodytable = "";
+                        if (!errorLevel.Equals("3"))
+                        //if (1 == 2)
+                        {
+                            body += text_jumlah_record;
+
+                            body += "<table border=1>";
+
+                            #region read file response to create table content
+                            FileInfo file = new FileInfo(filepath);
+                            FileStream fs = new FileStream(file.FullName, FileMode.Open, FileAccess.Read);
+                            StreamReader sr = new StreamReader(fs);
+                            while (sr.Peek() > 0)
+                            {
+                                bodytable += "<tr>";
+                                string isi_table = sr.ReadLine();
+                                if (string.IsNullOrEmpty(isi_table)) break;
+                                string[] data_column = isi_table.Split(',');
+                                for (int xx = 0; xx < data_column.Length; xx++)
+                                {
+                                    log.Info("Data kolumn ke-" + xx + data_column[xx]);
+                                    if (string.IsNullOrEmpty(data_column[xx]))
+                                    {
+                                        bodytable += "<td>&nbsp;</td>";
+                                    }
+                                    else bodytable += "<td>" + data_column[xx] + "</td>";
+                                }
+                                bodytable += "</tr>";
+                            }
+                            body += bodytable;
+                            #endregion
+
+                            body += "</table><br/ >";
+                        }
+                        else body += "<br/ ><p style:'font-size:10px;'>***File tidak valid, file tidak dapat dipratinjau***</p><br /><br />";
+                        body += "Semoga informasi ini dapat bermanfaat bagi anda. Untuk informasi lebih <br />";
+                        body += "lanjut, silakan menghubungi Help Desk CMS BRI di nomor 5758964/65. <br /><br />";
+                        body += "Hormat Kami,<br />";
+                        body += "PT. Bank Rakyat Indonesia (Persero), Tbk. <br /><br />";
+                        body += "***Email ini dihasilkan oleh komputer dan tidak perlu dijawab kembali.*** <br /><br />";
+                        body += "======================================================== <br />";
+                        body += "======================================================== <br /><br />";
+
+                        body += "Transaction was " + status_trx_en + ".<br />";
+                        body += "With file name " + filename.Substring(0, filename.Length - 4) + Ext + "<br />";
+                        if (!errorLevel.Equals("3"))
+                        {
+                            body += text_jumlah_record_en;
+
+                            body += "<table border=1>";
+
+                            #region header table
+                            body += "<tr>";
+                            body += "<th>No</th>";
+                            body += "<th>Name</th>";
+                            body += "<th>Account</th>";
+                            body += "<th>Amount</th>";
+                            body += "<th>Email</th>";
+                            body += "<th>Customer Reff</th>";
+                            body += "<th>Status</th>";
+                            body += "</tr>";
+                            #endregion
+
+                            //body table
+                            body += bodytable;
+
+                            body += "</table><br />";
+                        }
+                        else body += "<br/ ><p style:'font-size:10px;'>***File not valid, file can't be previewed***</p><br /><br />";
+
+                        body += "Hopefully this information can be useful for you. For  further information,<br />";
+                        body += "please contact Help Desk CMS BRI at 5758964/65. <br /><br />";
+                        body += "Best Regards, <br />";
+                        body += "PT. Bank Rakyat Indonesia (Persero) Tbk. <br /><br />";
+                        body += "This is a computer-generated email, please do not reply. <br />";
+
+                        message.Body = body;
+                        message.IsBodyHtml = true;
+                        Parameter prm1 = session.Load<Parameter>("EMAIL_SMTP_SERVER");
+                        String prmServer = prm1.Data;
+                        Parameter prm2 = session.Load<Parameter>("EMAIL_SMTP_PORT");
+                        Int32 prmPort = Convert.ToInt32(prm2.Data);
+                        SmtpClient smtp = new SmtpClient(prmServer, prmPort);//(ParameterHelper.GetString("EMAIL_SMTP_SERVER"), ParameterHelper.GetInteger("EMAIL_SMTP_PORT"));
+                        smtp.Timeout = 180000;
+                        smtp.UseDefaultCredentials = false;
+                        Parameter prm3 = session.Load<Parameter>("EMAIL_SMTP_USER");
+                        String prmUser = prm3.Data;
+                        Parameter prm4 = session.Load<Parameter>("EMAIL_SMTP_PASSWORD");
+                        String prmPass = prm4.Data;
+                        smtp.Credentials = new NetworkCredential(prmUser, prmPass);//(ParameterHelper.GetString("EMAIL_SMTP_USER"), ParameterHelper.GetString("EMAIL_SMTP_PASSWORD"));
+                        smtp.EnableSsl = false;
+
+                        Attachment attach = new Attachment(filepath);
+                        attach.Name = filename.Substring(0, filename.Length - 4).Replace(maker + "_", "") + Ext;
+                        message.Attachments.Add(attach);
+
+                        //message.DeliveryNotificationOptions = DeliveryNotificationOptions.OnSuccess; 
+                        try
+                        {
+                            smtp.Send(message);
+                            log.Info("Email Send Successfully");
+                        }
+                        catch (Exception ee)
+                        {
+                            log.Error("Error send email :: " + ee.Message + " = " + ee.InnerException.Message + " = " + ee.StackTrace);
+                            result = false;
+                        }
+                    }
+                    #endregion
+
+                }
+                else
+                {
+                    outUpload = "Tidak ada file yang di upload";
+                    log.Info("Tidak ada file yang di upload");
+                }
+            }
+            catch (Exception ee)
+            {
+                outUpload = ee.Message + " = " + ee.InnerException + " = " + ee.StackTrace;
+                log.Error(ee.Message + " = " + ee.InnerException + " = " + ee.StackTrace);
+                result = false;
+            }
+            return result;
+        }
+
+    }
+}

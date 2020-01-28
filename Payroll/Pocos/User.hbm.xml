@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+	<class name="BRIChannelSchedulerNew.Payroll.Pocos.User, BRIChannelSchedulerNew" table="users">
+
+		<id name="Id">
+			<column name="ID" sql-type="Int32" not-null="true"/>
+			<generator class="native" />
+		</id>
+
+		<property name="LastUpdate">
+			<column name="LASTUPDATE" />
+		</property>
+		<property name="CreationDate">
+			<column name="CREATIONDATE" />
+		</property>
+		<property name="LastLogon">
+			<column name="LASTLOGON" />
+		</property>
+		<property name="LastLogout">
+			<column name="LASTLOGOUT" />
+		</property>
+		<property name="LoginExpired">
+			<column name="LOGINEXPIRED" />
+		</property>
+		<property name="FirstName">
+			<column name="FIRSTNAME" />
+		</property>
+		<property name="LastName">
+			<column name="LASTNAME" />
+		</property>
+		<property name="Initial">
+			<column name="INITIAL" />
+		</property>
+		<property name="Email">
+			<column name="EMAIL" />
+		</property>
+		<property name="Phone">
+			<column name="PHONE" />
+		</property>
+		<property name="MPhone">
+			<column name="MPHONE" />
+		</property>
+		<property name="Identity">
+			<column name="IDENTITY" />
+		</property>
+		<property name="IdentityNo">
+			<column name="IDENTITYNO" />
+		</property>
+		<property name="IdentityExpired">
+			<column name="IDENTITYEXPIRED" />
+		</property>
+		<property name="BirthPlace">
+			<column name="BIRTHPLACE" />
+		</property>
+		<property name="BirthDate">
+			<column name="BIRTHDATE" />
+		</property>
+		<property name="MotherName">
+			<column name="MOTHERNAME" />
+		</property>
+		<property name="Data">
+			<column name="DATA" />
+		</property>
+		<property name="Handle">
+			<column name="HANDLE" />
+		</property>
+		<property name="Password">
+			<column name="PASSWORD" />
+		</property>
+		<property name="Token">
+			<column name="TOKEN" />
+		</property>
+		<property name="LastSession">
+			<column name="LASTSESSIONID" />
+		</property>
+		<property name="LastRemoteAddress">
+			<column name="LASTREMOTEADDR" />
+		</property>
+		<property name="Approver">
+			<column name="APPROVER" />
+		</property>
+		<property name="LoginRetry">
+			<column name="LOGINRETRY" />
+		</property>
+		<property name="Logged">
+			<column name="LOGGED" />
+		</property>
+		<property name="PreviousPassword">
+			<column name="PREVIOUSPASSWORD" />
+		</property>
+		<property name="RecStatus">
+			<column name="RECSTAT" />
+		</property>
+		<property name="KotaTerbit">
+			<column name="KOTA_TERBIT" />
+		</property>
+		<property name="AlamatLengkap">
+			<column name="ALAMAT_LENGKAP" />
+		</property>
+
+		<property name="ActStat">
+			<column name="ACTSTAT" />
+		</property>
+
+		<property name="PasswordExpired">
+			<column name="PASSWORDEXPIRED" />
+		</property>
+
+		<property name="Salt">
+			<column name="SALT" />
+		</property>
+
+		<property name="LoggedUserIdCorp">
+			<column name="LOGGEDUSERCORPID" />
+		</property>
+
+		<property name="IPStat">
+			<column name="IPStAT" />
+		</property>
+
+		<property name="IPPublic">
+			<column name="IPPUBLIC" />
+		</property>
+
+		<many-to-one name="UserMatrix"
+			column="ID"
+			unique="true"
+			not-null="true" update="false" insert="false"/>
+	</class>
+
+</hibernate-mapping>

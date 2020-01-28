@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+	<class name="BRIChannelSchedulerNew.Payroll.Pocos.SchManager, BRIChannelSchedulerNew" table="schmanager">
+		<id name="Id">
+			<column name="ID" sql-type="Int32" not-null="true"/>
+			<generator class="native" />
+		</id>
+		<property name="SchCode">
+			<column name="SCHCODE" />
+		</property>
+		<property name="SchDescription">
+			<column name="SCHDESCRIPTION" />
+		</property>
+		<property name="FID">
+			<column name="FID" />
+		</property>
+		<property name="Path">
+			<column name="PATH" />
+		</property>
+		<property name="FileName">
+			<column name="FILENAME" />
+		</property>
+		<property name="ServerId">
+			<column name="SERVERID" />
+		</property>
+		<property name="StartTime">
+			<column name="STARTTIME" />
+		</property>
+		<property name="EndTime">
+			<column name="ENDTIME" />
+		</property>
+		<property name="RunEvery">
+			<column name="RUNEVERY" />
+		</property>
+		<property name="SchLastRun">
+			<column name="SCHLASTRUN" />
+		</property>
+		<property name="Message">
+			<column name="MESSAGE" />
+		</property>
+		<property name="RestartStatus">
+			<column name="RESTARTSTATUS" />
+		</property>
+		<property name="AutoRestart">
+			<column name="AUTORESTART" />
+		</property>
+		<property name="UseLog">
+			<column name="USELOG" />
+		</property>
+		<property name="SchLogLastUpdate">
+			<column name="SCHLOGLASTUPDATE" />
+		</property>
+		<property name="LastUpdate">
+			<column name="LASTUPDATE" />
+		</property>
+		<property name="ErrorDescription">
+			<column name="ERRORDESCRIPTION" />
+    </property>
+	</class>
+</hibernate-mapping>

@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.TrxMassLLGDetail, BRIChannelSchedulerNew" table="trxmassllgdetail">
+
+    <id name="Id">
+      <column name="ID" sql-type="Double" not-null="true"/>
+      <generator class="native" />
+    </id>
+    <property name="ParentId">
+      <column name="PARENTID" />
+    </property>
+    <property name="DebitAccount">
+      <column name="DEBITACCOUNT" />
+    </property>
+    <property name="DebitAccountName">
+      <column name="DEBITACCOUNTNAME" />
+    </property>
+    <property name="DebitAccountType">
+      <column name="DEBITACCOUNTTYPE" />
+    </property>
+    <property name="DebitCurrency">
+      <column name="DEBITCURRENCY" />
+    </property>
+    <property name="CreditAccount">
+      <column name="CREDITACCOUNT" />
+    </property>
+    <property name="CreditAccountName">
+      <column name="CREDITACCOUNTNAME" />
+    </property>
+    <property name="CreditAmount">
+      <column name="CREDITAMOUNT" />
+    </property>
+    <property name="TrxRemarks">
+      <column name="TRXREMARK" />
+    </property>
+    <property name="Status">
+      <column name="STATUS" />
+    </property>
+    <property name="Description">
+      <column name="DESCRIPTION" />
+    </property>
+    <property name="FeeAmount">
+      <column name="FEEAMOUNT" />
+    </property>
+    <property name="FeeCurrency">
+      <column name="FEECURRENCY" />
+    </property>
+    <property name="TrxReff">
+      <column name="TRXREFF" />
+    </property>
+    <property name="RunningDate">
+      <column name="RUNNINGDATE" />
+    </property>
+    <property name="CreditAccountAddress">
+      <column name="CREDITACCOUNTADDRESS" />
+    </property>
+    <property name="CreditAccountBank">
+      <column name="CREDITACCOUNTBANK" />
+    </property>
+    <property name="MemberInfo">
+      <column name="MEMBERINFO" />
+    </property>
+    <property name="RtgsTrxRef">
+      <column name="RTGSTRXREF" />
+    </property>
+
+    <property name="CmsRefNo">
+      <column name="CMSREFNO" />
+    </property>
+
+    <property name="DebitAccountNameBrinets">
+      <column name="DEBITACCOUNTNAMEBRINETS" />
+    </property>
+
+    <property name="DebitAccountNameCode">
+      <column name="DEBITACCOUNTNAMECODE" />
+    </property>
+
+    <property name="CreditAccountCoded">
+      <column name="CREDITACCOUNTCODED" />
+    </property>
+
+    <property name="CreditAccountBankName">
+      <column name="CREDITACCOUNTBANKNAME" />
+    </property>
+
+    <property name="CreditAccountBranch">
+      <column name="CREDITACCOUNTBRANCH" />
+    </property>
+
+    <property name="Amount">
+      <column name="AMOUNT" />
+    </property>
+
+    <property name="FeeOur">
+      <column name="FEEOUR" />
+    </property>
+
+    <property name="FeeBen">
+      <column name="FEEBEN" />
+    </property>
+
+    <property name="DebitAmount">
+      <column name="DEBITAMOUNT" />
+    </property>
+
+    <property name="Notification">
+      <column name="NOTIFICATION" />
+    </property>
+
+    <property name="BucketAmt">
+      <column name="BUCKETAMT" />
+    </property>
+
+    <property name="BucketFee">
+      <column name="BUCKETFEE" />
+    </property>
+
+    <property name="JurnalSeq1">
+      <column name="JURNALSEQ1" />
+    </property>
+
+    <property name="JurnalSeq2">
+      <column name="JURNALSEQ2" />
+    </property>
+
+    <property name="NextProcessor">
+      <column name="NEXTPROCESSOR" />
+    </property>
+
+    <property name="ChargeType">
+      <column name="CHARGETYPE" />
+    </property>
+
+    <property name="Client">
+      <column name="CLIENT" />
+    </property>
+
+    <property name="BookingOffice">
+      <column name="BOOKINGOFFICE" />
+    </property>
+
+    <property name="Dke">
+      <column name="DKE" />
+    </property>
+
+    <property name="Seq">
+      <column name="SEQ" />
+    </property>
+
+  </class>
+</hibernate-mapping>

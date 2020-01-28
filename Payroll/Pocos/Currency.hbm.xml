@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.Currency, BRIChannelSchedulerNew" table="currency">
+
+    <id name="Id">
+      <column name="ID" sql-type="int" not-null="true"/>
+      <generator class="native" />
+    </id>
+
+    <property name="Code">
+      <column name="CODE" />
+    </property>
+    <property name="Description">
+      <column name="DESCRIPTION" />
+    </property>
+    <property name="BuyRate">
+      <column name="BUYRATE" />
+    </property>
+    <property name="SellRate">
+      <column name="SELLRATE" />
+    </property>
+    <property name="BookingRate">
+      <column name="BOOKINGRATE" />
+    </property>
+    <property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+	<property name="CurrencyCode">
+      <column name="CURRENCYCODE" />
+    </property>
+  </class>
+
+</hibernate-mapping>

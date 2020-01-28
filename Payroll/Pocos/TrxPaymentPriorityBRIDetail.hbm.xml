@@ -1,0 +1,264 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2" auto-import="false">
+  <class name="BRIChannelSchedulerNew.Payroll.Pocos.TrxPaymentPriorityBRIDetail, BRIChannelSchedulerNew" table="trxpaymentprioritybridetail">
+
+    <id name="Id">
+      <column name="ID" sql-type="Int32" not-null="true"/>
+      <generator class="native" />
+    </id>
+    <property name="LastUpdate">
+      <column name="LASTUPDATE" />
+    </property>
+    <property name="CustRefNo">
+      <column name="CUSTREFNO" />
+    </property>
+    <property name="CmsRefNo">
+      <column name="CMSREFNO" />
+    </property>
+    <property name="FxCode">
+      <column name="FXCODE" />
+    </property>
+    <property name="ParentId">
+      <column name="PARENTID" />
+    </property>
+    <property name="ClientId">
+      <column name="CLIENTID" />
+    </property>
+    <property name="MakerWork">
+      <column name="MAKERWORK" />
+    </property>
+    <property name="MakerTotal">
+      <column name="MAKERTOTAL" />
+    </property>
+    <property name="CheckWork">
+      <column name="CHECKWORK" />
+    </property>
+    <property name="CheckTotal">
+      <column name="CHECKTOTAL" />
+    </property>
+    <property name="ApproveWork">
+      <column name="APPROVEWORK" />
+    </property>
+    <property name="ApproveTotal">
+      <column name="APPROVETOTAL" />
+    </property>
+    <property name="UploadInfo">
+      <column name="UPLOADINFO" />
+    </property>
+    <property name="CheckerInfo">
+      <column name="CHECKERINFO" />
+    </property>
+    <property name="ApproverInfo">
+      <column name="APPROVERINFO" />
+    </property>
+    <property name="InstructionCode">
+      <column name="INSTRUCTIONCODE" />
+    </property>
+    <property name="TrxCode">
+      <column name="TRXCODE" />
+    </property>
+    <property name="ValueDate">
+      <column name="VALUEDATE" />
+    </property>
+    <property name="Currency">
+      <column name="CURRENCY" />
+    </property>
+    <property name="Amount">
+      <column name="AMOUNT" />
+    </property>
+    <property name="KursJual">
+      <column name="KURSJUAL" />
+    </property>
+    <property name="KursBeli">
+      <column name="KURSBELI" />
+    </property>
+    <property name="AmountDebet">
+      <column name="AMOUNTDEBET" />
+    </property>
+    <property name="TrxRemark">
+      <column name="TRXREMARK" />
+    </property>
+    <property name="MiscToBankInfo">
+      <column name="MISCTOBANKINFO" />
+    </property>
+    <property name="ChargeType">
+      <column name="CHARGETYPE" />
+    </property>
+    <property name="ChargeCurrency">
+      <column name="CHARGECURRENCY" />
+    </property>
+    <property name="ChargeAmount">
+      <column name="CHARGEAMOUNT" />
+    </property>
+    <property name="FeeOur">
+      <column name="FEEOUR" />
+    </property>
+    <property name="DebitAcc">
+      <column name="DEBITACC" />
+    </property>
+    <property name="DebitAccName">
+      <column name="DEBITACCNAME" />
+    </property>
+    <property name="DebitAccAddress">
+      <column name="DEBITACCADDRESS" />
+    </property>
+    <property name="DebitAccCountryCode">
+      <column name="DEBITACCCOUNTRYCODE" />
+    </property>
+    <property name="BenAcc">
+      <column name="BENACC" />
+    </property>
+    <property name="BenAccName">
+      <column name="BENACCNAME" />
+    </property>
+    <property name="BenAccNameBrinets">
+      <column name="BENACCNAMEBRINETS" />
+    </property>
+    <property name="BenAccAddress">
+      <column name="BENACCADDRESS" />
+    </property>
+    <property name="BenAccCountryCode">
+      <column name="BENACCCOUNTRYCODE" />
+    </property>
+    <property name="BenBankType">
+      <column name="BENBANKTYPE" />
+    </property>
+    <property name="BenBankIdentifier">
+      <column name="BENBANKIDENTIFIER" />
+    </property>
+    <property name="BenBankName">
+      <column name="BENBANKNAME" />
+    </property>
+    <property name="BenBankAddress">
+      <column name="BENBANKADDRESS" />
+    </property>
+    <property name="BenBankCountryCode">
+      <column name="BENBANKCOUNTRYCODE" />
+    </property>
+    <property name="InterBankIdentifier">
+      <column name="INTERBANKIDENTIFIER" />
+    </property>
+    <property name="InterBankType">
+      <column name="INTERBANKTYPE" />
+    </property>
+    <property name="InterBankName">
+      <column name="INTERBANKNAME" />
+    </property>
+    <property name="InterBankAddress">
+      <column name="INTERBANKADDRESS" />
+    </property>
+    <property name="InterBankCountryCode">
+      <column name="INTERBANKCOUNTRYCODE" />
+    </property>
+    <property name="Notification">
+      <column name="NOTIFICATION" />
+    </property>
+    <property name="Status">
+      <column name="STATUS" />
+    </property>
+    <property name="Description">
+      <column name="DESCRIPTION" />
+    </property>
+    <property name="DebitCurr">
+      <column name="DEBITCURR" />
+    </property>
+    <property name="SandiTrxBI">
+      <column name="SANDITRXBI" />
+    </property>
+    <property name="BenCategory">
+      <column name="BENCATEGORY" />
+    </property>
+    <property name="BenRelation">
+      <column name="BENRELATION" />
+    </property>
+    <property name="NextProcessor">
+      <column name="NEXTPROCESSOR" />
+    </property>
+    <property name="BucketAmt">
+      <column name="BUCKETAMT" />
+    </property>
+
+    <property name="BucketFee">
+      <column name="BUCKETFEE" />
+    </property>
+
+    <property name="JournalSeq1">
+      <column name="JURNALSEQ1" />
+    </property>
+
+    <property name="JournalSeq2">
+      <column name="JURNALSEQ2" />
+    </property>
+
+    <property name="ErrorCode1">
+      <column name="ERRORCODE1" />
+    </property>
+
+    <property name="ErrorCode2">
+      <column name="ERRORCODE2" />
+    </property>
+
+    <property name="BenAccPostalCode">
+      <column name="BENACCPOSTALCODE" />
+    </property>
+
+    <property name="BenAccPhone">
+      <column name="BENACCPHONE" />
+    </property>
+
+    <property name="BrivaRekGiro">
+      <column name="BRIVAREKGIRO" />
+    </property>
+
+    <property name="BrivaCustName">
+      <column name="BRIVACUSTNAME" />
+    </property>
+
+    <property name="BrivaKreditis">
+      <column name="BRIVAKREDITIS" />
+    </property>
+    <property name="BrivaTranId">
+      <column name="BRIVATRANID" />
+    </property>
+    <property name="SpesialWorkflow">
+      <column name="SPESIALWORKFLOW" />
+    </property>
+    <property name="SWIFTFlag">
+      <column name="SWIFTFLAG" />
+    </property>
+    <property name="ReportFlag">
+      <column name="REPORTFLAG" />
+    </property>
+    <property name="ReportGenerateTime">
+      <column name="REPORTGENERATETIME" />
+    </property>
+    <property name="BookingOffice">
+      <column name="BOOKINGOFFICE" />
+    </property>
+    <property name="CorvaDebitIs">
+      <column name="CORVADEBITIS" />
+    </property>
+    <property name="Schedule">
+      <column name="SCHEDULE" />
+    </property>
+    <property name="CreditCurr">
+      <column name="CREDITCURR" />
+    </property>
+    <property name="DebitAccType">
+      <column name="DEBITACCTYPE" />
+    </property>
+    <property name="BenAccType">
+      <column name="BENACCTYPE" />
+    </property>
+    <property name="BrivaBen">
+      <column name="BRIVABEN" />
+    </property>
+    <property name="BrivaOur">
+      <column name="BRIVAOUR" />
+    </property>
+    <property name="ReffCode">
+      <column name="REFFCODE" />
+    </property>
+    
+  </class>
+</hibernate-mapping>
